@@ -144,7 +144,9 @@ ${questionData.text}`,
 
 app.post('/webhook', line.middleware(config), async (req, res) => {
 
+  console.log('========================');
   console.log('Webhook受信');
+  console.log('========================');
 
   res.status(200).end();
 
@@ -176,6 +178,9 @@ async function handleEvent(event) {
       event.type !== 'message' ||
       event.message.type !== 'text'
     ) {
+
+      console.log('テキスト以外');
+
       return null;
     }
 
@@ -190,7 +195,7 @@ async function handleEvent(event) {
 
     if (text === '診断開始') {
 
-      console.log('診断スタート');
+      console.log('診断開始');
 
       userData[userId] = {
         step: 0,
@@ -269,12 +274,24 @@ async function handleEvent(event) {
     }
 
     // =========================
-    // 最終スコア
+    // 最大スコア計算
     // =========================
 
-    const score = current.score;
+    const maxScore = questions.reduce(
+      (total, q) => total + q.point,
+      0
+    );
 
-    console.log(`最終スコア: ${score}`);
+    // =========================
+    // 100%換算
+    // =========================
+
+    const score = Math.round(
+      (current.score / maxScore) * 100
+    );
+
+    console.log(`最大スコア: ${maxScore}`);
+    console.log(`最終スコア: ${score}%`);
 
     // =========================
     // コメント生成
@@ -283,16 +300,16 @@ async function handleEvent(event) {
     let title = '';
     let comment = '';
 
-    if (score >= 100) {
+    if (score >= 80) {
 
       title = '危険レベル：非常に高い';
 
       comment =
         '浮気の可能性がかなり高い傾向があります。\n\n' +
-        '実際に相談されるケースでも、かなり近い行動パターンが確認されています。\n\n' +
+        '実際の相談ケースでも近い行動パターンが多く確認されています。\n\n' +
         '状況が悪化する前に、早めの確認や相談をおすすめします。';
 
-    } else if (score >= 70) {
+    } else if (score >= 60) {
 
       title = '危険レベル：高';
 
@@ -327,7 +344,7 @@ async function handleEvent(event) {
     console.log('ユーザーデータ削除完了');
 
     // =========================
-    // 診断結果送信
+    // Flex Message送信
     // =========================
 
     return client.replyMessage(event.replyToken, {
