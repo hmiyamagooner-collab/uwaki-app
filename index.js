@@ -35,7 +35,6 @@ async function handleEvent(event) {
 
   if (text === '診断開始') {
 
-  userData[userId] = {
     step: 0,
     score: 0
   };
