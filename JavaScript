@@ -1,322 +1,151 @@
-require("dotenv").config();
-
-const express = require("express");
-const line = require("@line/bot-sdk");
-
-const app = express();
-
-const config = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
-  channelSecret: process.env.LINE_CHANNEL_SECRET,
-};
-
-const client = new line.Client(config);
-
 // =========================
-// Webhook
+// スコア別コメント
 // =========================
 
-app.post(
-  "/webhook",
-  line.middleware(config),
-  async (req, res) => {
+let title = "";
+let comment = "";
+let button = null;
 
-    // 先に200返して高速化
-    res.sendStatus(200);
+if (score >= 80) {
 
-    try {
+  title = "危険レベル：高";
 
-      const events = req.body.events;
+  comment =
+    "浮気の可能性がかなり高い傾向があります。\n\n" +
+    "実際に相談される方の多くも、『違和感はあったけど確信が持てなかった』というケースがほとんどです。\n\n" +
+    "今後さらに状況が悪化する前に、一度専門スタッフへ相談してみませんか？";
 
-      for (const event of events) {
-        await handleEvent(event);
-      }
-
-    } catch (err) {
-      console.error(err);
+  button = {
+    type: "button",
+    style: "primary",
+    color: "#ff3366",
+    action: {
+      type: "uri",
+      label: "無料で相談する",
+      uri: "https://あなたの相談URL"
     }
-  }
-);
+  };
 
-// =========================
-// イベント処理
-// =========================
+} else if (score >= 60) {
 
-async function handleEvent(event) {
+  title = "危険レベル：中";
 
-  // =========================
-  // リッチメニュー Postback
-  // =========================
+  comment =
+    "少し気になる行動が増えているようです。\n\n" +
+    "現時点では決定的ではありませんが、違和感を放置すると後から後悔するケースも少なくありません。\n\n" +
+    "今後の変化には注意した方が良いかもしれません。";
 
-  if (event.type === "postback") {
+} else if (score >= 30) {
 
-    const data = event.postback.data;
+  title = "危険レベル：低";
 
-    // 診断開始
-    if (data === "start_diagnosis") {
+  comment =
+    "大きな異変は見られませんでした。\n\n" +
+    "ただし、浮気傾向は突然変化する場合もあります。\n\n" +
+    "小さな違和感を見逃さないことが大切です。";
 
-      await client.replyMessage(event.replyToken, {
-        type: "flex",
-        altText: "浮気診断スタート",
-        contents: {
-          type: "bubble",
+} else {
 
-          body: {
-            type: "box",
-            layout: "vertical",
-            spacing: "md",
-            contents: [
+  title = "危険レベル：かなり低";
 
-              {
-                type: "text",
-                text: "🕵 浮気診断",
-                weight: "bold",
-                size: "xl"
-              },
-
-              {
-                type: "text",
-                text: "まずは行動タイプを選んでください",
-                wrap: true,
-                size: "sm",
-                color: "#666666"
-              }
-            ]
-          },
-
-          footer: {
-            type: "box",
-            layout: "vertical",
-            spacing: "sm",
-            contents: [
-
-              {
-                type: "button",
-                style: "primary",
-                action: {
-                  type: "postback",
-                  label: "昼型",
-                  data: "type_day"
-                }
-              },
-
-              {
-                type: "button",
-                style: "secondary",
-                action: {
-                  type: "postback",
-                  label: "夜型",
-                  data: "type_night"
-                }
-              }
-            ]
-          }
-        }
-      });
-
-      return;
-    }
-
-    // =========================
-    // 昼型
-    // =========================
-
-    if (data === "type_day") {
-
-      await client.replyMessage(event.replyToken, {
-        type: "text",
-        text: "スマホを隠すことはありますか？\n\n「はい」or「いいえ」で答えてください。"
-      });
-
-      return;
-    }
-
-    // =========================
-    // 夜型
-    // =========================
-
-    if (data === "type_night") {
-
-      await client.replyMessage(event.replyToken, {
-        type: "text",
-        text: "最近帰宅時間は遅いですか？\n\n「はい」or「いいえ」で答えてください。"
-      });
-
-      return;
-    }
-  }
-
-  // =========================
-  // 通常メッセージ
-  // =========================
-
-  if (event.type === "message") {
-
-    if (event.message.type !== "text") return;
-
-    const text = event.message.text;
-
-    // はい・いいえ以外は無視
-    if (
-      text !== "はい" &&
-      text !== "いいえ"
-    ) {
-      return;
-    }
-
-    // =========================
-    // スコア計算
-    // =========================
-
-    let score = 0;
-
-    if (text === "はい") {
-      score = 85;
-    } else {
-      score = 20;
-    }
-
-    // =========================
-    // コメント生成
-    // =========================
-
-    let title = "";
-    let comment = "";
-    let button = null;
-
-    if (score >= 80) {
-
-      title = "危険レベル：高";
-
-      comment =
-        "浮気の可能性がかなり高い傾向があります。\n\n" +
-        "実際に相談される方の多くも、『違和感はあったけど確信が持てなかった』というケースがほとんどです。\n\n" +
-        "今後さらに状況が悪化する前に、一度専門スタッフへ相談してみませんか？";
-
-      button = {
-        type: "button",
-        style: "primary",
-        color: "#ff3366",
-        action: {
-          type: "uri",
-          label: "無料で相談する",
-          uri: "https://あなたの相談URL"
-        }
-      };
-
-    } else if (score >= 60) {
-
-      title = "危険レベル：中";
-
-      comment =
-        "少し気になる行動が増えているようです。\n\n" +
-        "現時点では決定的ではありませんが、違和感を放置すると後から後悔するケースも少なくありません。\n\n" +
-        "今後の変化には注意した方が良いかもしれません。";
-
-    } else if (score >= 30) {
-
-      title = "危険レベル：低";
-
-      comment =
-        "大きな異変は見られませんでした。\n\n" +
-        "ただし、浮気傾向は突然変化する場合もあります。\n\n" +
-        "小さな違和感を見逃さないことが大切です。";
-
-    } else {
-
-      title = "危険レベル：かなり低";
-
-      comment =
-        "現時点では浮気の可能性は低そうです。\n\n" +
-        "ただ、油断しすぎず普段のコミュニケーションを大切にしていきましょう。";
-    }
-
-    // =========================
-    // Flex Message送信
-    // =========================
-
-    await client.replyMessage(event.replyToken, {
-      type: "flex",
-      altText: "浮気診断結果",
-
-      contents: {
-        type: "bubble",
-
-        hero: {
-          type: "image",
-          url: "https://images.unsplash.com/photo-1517841905240-472988babdf9",
-          size: "full",
-          aspectRatio: "20:13",
-          aspectMode: "cover"
-        },
-
-        body: {
-          type: "box",
-          layout: "vertical",
-          spacing: "md",
-
-          contents: [
-
-            {
-              type: "text",
-              text: "🕵 浮気診断結果",
-              weight: "bold",
-              size: "xl"
-            },
-
-            {
-              type: "text",
-              text: title,
-              weight: "bold",
-              size: "lg",
-              color: "#ff3366"
-            },
-
-            {
-              type: "text",
-              text: `浮気率 ${score}%`,
-              size: "xxl",
-              weight: "bold",
-              color: "#ff3366"
-            },
-
-            {
-              type: "separator",
-              margin: "lg"
-            },
-
-            {
-              type: "text",
-              text: comment,
-              wrap: true,
-              size: "sm",
-              margin: "lg",
-              color: "#555555"
-            }
-          ]
-        },
-
-        footer: button
-          ? {
-              type: "box",
-              layout: "vertical",
-              spacing: "sm",
-              contents: [button]
-            }
-          : undefined
-      }
-    });
-
-    return;
-  }
+  comment =
+    "現時点では浮気の可能性は低そうです。\n\n" +
+    "ただ、油断しすぎず普段のコミュニケーションを大切にしていきましょう。";
 }
 
 // =========================
-// サーバー起動
+// Flex Message送信
 // =========================
 
-const PORT = process.env.PORT || 3000;
+await client.replyMessage(event.replyToken, {
+  type: "flex",
+  altText: "診断結果",
 
-app.listen(PORT, () => {
-  console.log(`Server running on ${PORT}`);
+  contents: {
+    type: "bubble",
+
+    hero: {
+      type: "image",
+      url: "https://images.unsplash.com/photo-1517841905240-472988babdf9",
+      size: "full",
+      aspectRatio: "20:13",
+      aspectMode: "cover"
+    },
+
+    body: {
+      type: "box",
+      layout: "vertical",
+      spacing: "md",
+
+      contents: [
+
+        // =========================
+        // タイトル
+        // =========================
+
+        {
+          type: "text",
+          text: "🕵 診断結果",
+          weight: "bold",
+          size: "xl"
+        },
+
+        // =========================
+        // 危険レベル
+        // =========================
+
+        {
+          type: "text",
+          text: title,
+          weight: "bold",
+          size: "lg",
+          color: "#ff3366",
+          margin: "md"
+        },
+
+        // =========================
+        // 浮気率
+        // =========================
+
+        {
+          type: "text",
+          text: `浮気率 ${score}%`,
+          size: "xxl",
+          weight: "bold",
+          color: "#ff3366"
+        },
+
+        {
+          type: "separator",
+          margin: "lg"
+        },
+
+        // =========================
+        // コメント
+        // =========================
+
+        {
+          type: "text",
+          text: comment,
+          wrap: true,
+          size: "sm",
+          margin: "lg",
+          color: "#555555"
+        }
+      ]
+    },
+
+    // =========================
+    // 相談ボタン
+    // =========================
+
+    footer: button
+      ? {
+          type: "box",
+          layout: "vertical",
+          spacing: "sm",
+          contents: [button]
+        }
+      : undefined
+  }
 });
