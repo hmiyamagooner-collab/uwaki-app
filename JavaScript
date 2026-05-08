@@ -1,0 +1,197 @@
+require("dotenv").config();
+
+const express = require("express");
+const line = require("@line/bot-sdk");
+
+const app = express();
+
+const config = {
+  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+  channelSecret: process.env.LINE_CHANNEL_SECRET,
+};
+
+const client = new line.Client(config);
+
+app.post(
+  "/webhook",
+  line.middleware(config),
+  async (req, res) => {
+
+    // 最速レスポンス
+    res.sendStatus(200);
+
+    try {
+      const events = req.body.events;
+
+      for (const event of events) {
+        await handleEvent(event);
+      }
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+);
+
+async function handleEvent(event) {
+
+  // postback処理
+  if (event.type === "postback") {
+
+    const data = event.postback.data;
+
+    // 診断開始
+    if (data === "start_diagnosis") {
+
+      await client.replyMessage(event.replyToken, {
+        type: "flex",
+        altText: "浮気診断スタート",
+        contents: {
+          type: "bubble",
+          body: {
+            type: "box",
+            layout: "vertical",
+            spacing: "md",
+            contents: [
+              {
+                type: "text",
+                text: "浮気診断スタート",
+                weight: "bold",
+                size: "xl"
+              },
+              {
+                type: "text",
+                text: "まずは行動タイプを選んでください",
+                wrap: true,
+                size: "sm",
+                color: "#666666"
+              }
+            ]
+          },
+          footer: {
+            type: "box",
+            layout: "vertical",
+            spacing: "sm",
+            contents: [
+              {
+                type: "button",
+                style: "primary",
+                action: {
+                  type: "postback",
+                  label: "昼型",
+                  data: "type_day"
+                }
+              },
+              {
+                type: "button",
+                style: "secondary",
+                action: {
+                  type: "postback",
+                  label: "夜型",
+                  data: "type_night"
+                }
+              }
+            ]
+          }
+        }
+      });
+
+      return;
+    }
+
+    // 昼型
+    if (data === "type_day") {
+
+      await client.replyMessage(event.replyToken, {
+        type: "text",
+        text: "昼型ですね！スマホを隠すことはありますか？"
+      });
+
+      return;
+    }
+
+    // 夜型
+    if (data === "type_night") {
+
+      await client.replyMessage(event.replyToken, {
+        type: "text",
+        text: "夜型ですね！最近帰宅時間は遅いですか？"
+      });
+
+      return;
+    }
+  }
+
+  // 通常メッセージ
+  if (event.type === "message") {
+
+    if (event.message.type !== "text") return;
+
+    const text = event.message.text;
+
+    // リッチメニュー以外を無視したい場合
+    if (
+      text !== "はい" &&
+      text !== "いいえ"
+    ) {
+      return;
+    }
+
+    // 簡易診断
+    let score = 0;
+
+    if (text === "はい") {
+      score += 40;
+    }
+
+    let result = "";
+
+    if (score >= 40) {
+      result = "浮気率は高めです…";
+    } else {
+      result = "浮気率は低そうです！";
+    }
+
+    await client.replyMessage(event.replyToken, {
+      type: "flex",
+      altText: "診断結果",
+      contents: {
+        type: "bubble",
+        hero: {
+          type: "image",
+          url: "https://images.unsplash.com/photo-1517841905240-472988babdf9",
+          size: "full",
+          aspectRatio: "20:13",
+          aspectMode: "cover"
+        },
+        body: {
+          type: "box",
+          layout: "vertical",
+          spacing: "md",
+          contents: [
+            {
+              type: "text",
+              text: "診断結果",
+              weight: "bold",
+              size: "xl"
+            },
+            {
+              type: "text",
+              text: result,
+              wrap: true,
+              size: "md"
+            }
+          ]
+        }
+      }
+    });
+
+    return;
+  }
+}
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on ${PORT}`);
+});
