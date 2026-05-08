@@ -33,6 +33,18 @@ app.post('/webhook', line.middleware(config), async (req, res) => {
 
 async function handleEvent(event) {
 
+  if (text === '診断開始') {
+
+  userData[userId] = {
+    step: 0,
+    score: 0
+  };
+
+  return client.replyMessage(event.replyToken, {
+    type: 'text',
+    text: `浮気占いスタート！\n\nQ1. ${questions[0]}\n\nはい / いいえ`
+  });
+}
   if (event.type !== 'message' || event.message.type !== 'text') {
     return null;
   }
