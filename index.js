@@ -42,6 +42,7 @@ function createQuestionMessage(questionNumber, questionText) {
 
   return {
     type: 'text',
+
     text:
 `Q${questionNumber}
 ${questionText}`,
@@ -75,7 +76,7 @@ ${questionText}`,
 
 app.post('/webhook', line.middleware(config), async (req, res) => {
 
-  console.log("Webhook受信");
+  console.log('Webhook受信');
 
   res.status(200).end();
 
@@ -85,7 +86,7 @@ app.post('/webhook', line.middleware(config), async (req, res) => {
 
   } catch (err) {
 
-    console.error("Webhook Error:", err);
+    console.error('Webhook Error:', err);
   }
 });
 
@@ -97,17 +98,20 @@ async function handleEvent(event) {
 
   try {
 
-    console.log("イベント:", JSON.stringify(event));
+    console.log('イベント:', JSON.stringify(event));
 
     // テキスト以外無視
-    if (event.type !== 'message' || event.message.type !== 'text') {
+    if (
+      event.type !== 'message' ||
+      event.message.type !== 'text'
+    ) {
       return null;
     }
 
     const userId = event.source.userId;
     const text = event.message.text.trim();
 
-    console.log("受信テキスト:", text);
+    console.log('受信:', text);
 
     // =========================
     // 診断開始
@@ -115,7 +119,7 @@ async function handleEvent(event) {
 
     if (text === '診断開始') {
 
-      console.log("診断開始");
+      console.log('診断開始');
 
       userData[userId] = {
         step: 0,
@@ -129,12 +133,12 @@ async function handleEvent(event) {
     }
 
     // =========================
-    // 未開始
+    // 未開始ユーザー
     // =========================
 
     if (!userData[userId]) {
 
-      console.log("未開始ユーザー");
+      console.log('未開始ユーザー');
 
       return null;
     }
@@ -142,12 +146,12 @@ async function handleEvent(event) {
     const current = userData[userId];
 
     // =========================
-    // はい・いいえ以外無視
+    // 「はい」「いいえ」以外無視
     // =========================
 
     if (text !== 'はい' && text !== 'いいえ') {
 
-      console.log("無効入力");
+      console.log('無効入力');
 
       return null;
     }
@@ -162,14 +166,16 @@ async function handleEvent(event) {
 
     current.step++;
 
-    console.log("現在スコア:", current.score);
-    console.log("現在STEP:", current.step);
+    console.log('現在STEP:', current.step);
+    console.log('現在スコア:', current.score);
 
     // =========================
     // 次の質問
     // =========================
 
     if (current.step < questions.length) {
+
+      console.log('次の質問');
 
       return client.replyMessage(
         event.replyToken,
@@ -186,50 +192,40 @@ async function handleEvent(event) {
 
     const score = current.score;
 
-    console.log("最終スコア:", score);
+    console.log('最終スコア:', score);
 
     // =========================
     // コメント生成
     // =========================
 
-    let title = "";
-    let comment = "";
-    let button = null;
+    let title = '';
+    let comment = '';
 
     if (score >= 80) {
 
-      title = "危険レベル：高";
+      title = '危険レベル：高';
 
       comment =
-        "浮気の可能性がかなり高い傾向があります。\n\n" +
-        "今後さらに状況が悪化する前に、一度専門スタッフへ相談してみませんか？";
-
-      button = {
-        type: "button",
-        style: "primary",
-        color: "#ff3366",
-        action: {
-          type: "uri",
-          label: "無料で相談する",
-          uri: "https://あなたの相談URL"
-        }
-      };
+        '浮気の可能性がかなり高い傾向があります。\n\n' +
+        '今後さらに状況が悪化する前に、一度専門スタッフへ相談してみませんか？';
 
     } else if (score >= 60) {
 
-      title = "危険レベル：中";
+      title = '危険レベル：中';
 
       comment =
-        "少し気になる行動が増えているようです。\n\n" +
-        "今後の変化には注意した方が良いかもしれません。";
+        '少し気になる行動が増えているようです。\n\n' +
+        '今後の変化には注意した方が良いかもしれません。';
 
     } else {
 
-      title = "危険レベル：低";
+      title = '危険レベル：低';
 
       comment =
-        "現時点では大きな問題は見られませんでした。";
+        '現時点では大きな問題は見られませんでした。';
     }
+
+    console.log('診断結果作成完了');
 
     // =========================
     // ユーザーデータ削除
@@ -237,79 +233,74 @@ async function handleEvent(event) {
 
     delete userData[userId];
 
-    console.log("診断結果送信");
-
     // =========================
-    // Flex Message
+    // 診断結果送信
     // =========================
 
     return client.replyMessage(event.replyToken, {
-      type: "flex",
-      altText: "診断結果",
+
+      type: 'flex',
+
+      altText: '診断結果',
 
       contents: {
-        type: "bubble",
+
+        type: 'bubble',
 
         body: {
-          type: "box",
-          layout: "vertical",
-          spacing: "md",
+
+          type: 'box',
+
+          layout: 'vertical',
+
+          spacing: 'md',
 
           contents: [
 
             {
-              type: "text",
-              text: "🕵 診断結果",
-              weight: "bold",
-              size: "xl"
+              type: 'text',
+              text: '🕵 診断結果',
+              weight: 'bold',
+              size: 'xl'
             },
 
             {
-              type: "text",
+              type: 'text',
               text: title,
-              weight: "bold",
-              size: "lg",
-              color: "#ff3366"
+              weight: 'bold',
+              size: 'lg',
+              color: '#ff3366'
             },
 
             {
-              type: "text",
+              type: 'text',
               text: `浮気率 ${score}%`,
-              size: "xxl",
-              weight: "bold",
-              color: "#ff3366"
+              size: 'xxl',
+              weight: 'bold',
+              color: '#ff3366'
             },
 
             {
-              type: "separator",
-              margin: "lg"
+              type: 'separator',
+              margin: 'lg'
             },
 
             {
-              type: "text",
+              type: 'text',
               text: comment,
               wrap: true,
-              size: "sm",
-              margin: "lg",
-              color: "#555555"
+              size: 'sm',
+              margin: 'lg',
+              color: '#555555'
             }
           ]
-        },
-
-        footer: button
-          ? {
-              type: "box",
-              layout: "vertical",
-              spacing: "sm",
-              contents: [button]
-            }
-          : undefined
+        }
       }
     });
 
   } catch (err) {
 
-    console.error("handleEvent Error:", err);
+    console.error('handleEvent Error:', err);
   }
 }
 
