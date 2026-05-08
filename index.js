@@ -12,6 +12,9 @@ const config = {
 
 const client = new line.Client(config);
 
+// =========================
+// 質問一覧
+// =========================
 const questions = [
   "最近、スマホを見せなくなった",
   "返信が前より遅くなった",
@@ -24,23 +27,72 @@ const questions = [
   "異性の話題を避けるようになった"
 ];
 
+// =========================
+// ユーザー状態保存
+// =========================
 const userData = {};
 
+// =========================
+// はい・いいえ ボタン
+// =========================
+function createQuestionMessage(questionNumber, questionText) {
+
+  return {
+    type: 'text',
+    text:
+`🔮 浮気占い
+
+Q${questionNumber}
+${questionText}`,
+    quickReply: {
+      items: [
+        {
+          type: 'action',
+          action: {
+            type: 'message',
+            label: 'はい',
+            text: 'はい'
+          }
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'message',
+            label: 'いいえ',
+            text: 'いいえ'
+          }
+        }
+      ]
+    }
+  };
+}
+
+// =========================
+// Webhook
+// =========================
 app.post('/webhook', line.middleware(config), async (req, res) => {
+
   await Promise.all(req.body.events.map(handleEvent));
+
   res.status(200).end();
 });
 
+// =========================
+// イベント処理
+// =========================
 async function handleEvent(event) {
 
+  // テキスト以外無視
   if (event.type !== 'message' || event.message.type !== 'text') {
     return null;
   }
 
   const userId = event.source.userId;
-  const text = event.message.text;
+  const text = event.message.text.trim();
 
+  // =========================
   // 診断開始
+  // =========================
   if (text === '診断開始') {
 
     userData[userId] = {
@@ -48,62 +100,112 @@ async function handleEvent(event) {
       score: 0
     };
 
-    return client.replyMessage(event.replyToken, {
-      type: 'text',
-      text: `浮気占いスタート！\n\nQ1. ${questions[0]}\n\nはい / いいえ`
-    });
+    return client.replyMessage(
+      event.replyToken,
+      createQuestionMessage(1, questions[0])
+    );
   }
 
-  // ユーザー未開始
+  // =========================
+  // 未開始
+  // =========================
   if (!userData[userId]) {
+
     return client.replyMessage(event.replyToken, {
       type: 'text',
-      text: 'リッチメニューから「診断開始」を押してください。'
+      text:
+`👇 リッチメニューから
+「診断開始」を押してください`
     });
   }
 
   const current = userData[userId];
 
+  // =========================
+  // はい・いいえ以外
+  // =========================
+  if (text !== 'はい' && text !== 'いいえ') {
+
+    return client.replyMessage(event.replyToken, {
+      type: 'text',
+      text: '「はい」または「いいえ」を押してください。'
+    });
+  }
+
+  // =========================
+  // 点数加算
+  // =========================
   if (text === 'はい') {
     current.score += 10;
   }
 
   current.step++;
 
+  // =========================
   // 次の質問
+  // =========================
   if (current.step < questions.length) {
 
-    return client.replyMessage(event.replyToken, {
-      type: 'text',
-      text: `Q${current.step + 1}. ${questions[current.step]}\n\nはい / いいえ`
-    });
+    return client.replyMessage(
+      event.replyToken,
+      createQuestionMessage(
+        current.step + 1,
+        questions[current.step]
+      )
+    );
+  }
+
+  // =========================
+  // 結果判定
+  // =========================
+  let title = '';
+  let result = '';
+
+  if (current.score <= 20) {
+
+    title = '浮気可能性：低め';
+    result = '今のところ浮気の可能性は低そうです！';
+
+  } else if (current.score <= 50) {
+
+    title = '少し注意';
+    result = '少し気になる行動があるかも…。';
+
+  } else if (current.score <= 80) {
+
+    title = '怪しいサインあり';
+    result = '怪しいサインが複数あります。';
 
   } else {
 
-    // 結果表示
-    let result = '';
-
-    if (current.score <= 20) {
-      result = '今のところ浮気の可能性は低そうです！';
-    } else if (current.score <= 50) {
-      result = '少し気になる行動があるかも…。';
-    } else if (current.score <= 80) {
-      result = '怪しいサインが複数あります。';
-    } else {
-      result = '浮気リスク高め…！';
-    }
-
-    const finalScore = current.score;
-
-    delete userData[userId];
-
-    return client.replyMessage(event.replyToken, {
-      type: 'text',
-      text: `診断結果\n\nスコア：${finalScore}点\n\n${result}`
-    });
+    title = '浮気リスク高め';
+    result = '浮気リスク高め…！';
   }
+
+  const finalScore = current.score;
+
+  // ユーザーデータ削除
+  delete userData[userId];
+
+  // =========================
+  // 結果返信
+  // =========================
+  return client.replyMessage(event.replyToken, {
+    type: 'text',
+    text:
+`🔮 診断結果
+
+${title}
+
+スコア：${finalScore}点
+
+${result}`
+  });
 }
 
+// =========================
+// サーバー起動
+// =========================
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
