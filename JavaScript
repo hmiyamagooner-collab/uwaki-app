@@ -1,197 +1,123 @@
-require("dotenv").config();
+let score = 85;
 
-const express = require("express");
-const line = require("@line/bot-sdk");
+let title = "";
+let comment = "";
+let button = null;
 
-const app = express();
+// =========================
+// スコア別コメント
+// =========================
 
-const config = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
-  channelSecret: process.env.LINE_CHANNEL_SECRET,
-};
+if (score >= 80) {
 
-const client = new line.Client(config);
+  title = "危険レベル：高";
 
-app.post(
-  "/webhook",
-  line.middleware(config),
-  async (req, res) => {
+  comment =
+    "浮気の可能性がかなり高い傾向があります。\n\n" +
+    "実際に相談される方の多くも、『違和感はあったけど確信が持てなかった』というケースがほとんどです。\n\n" +
+    "今後さらに状況が悪化する前に、一度専門スタッフへ相談してみませんか？";
 
-    // 最速レスポンス
-    res.sendStatus(200);
-
-    try {
-      const events = req.body.events;
-
-      for (const event of events) {
-        await handleEvent(event);
-      }
-
-    } catch (err) {
-      console.error(err);
+  // 相談ボタン表示
+  button = {
+    type: "button",
+    style: "primary",
+    color: "#ff3366",
+    action: {
+      type: "uri",
+      label: "無料で相談する",
+      uri: "https://あなたの相談URL"
     }
-  }
-);
+  };
 
-async function handleEvent(event) {
+} else if (score >= 60) {
 
-  // postback処理
-  if (event.type === "postback") {
+  title = "危険レベル：中";
 
-    const data = event.postback.data;
+  comment =
+    "少し気になる行動が増えているようです。\n\n" +
+    "現時点では決定的ではありませんが、違和感を放置すると後から後悔するケースも少なくありません。\n\n" +
+    "今後の変化には注意した方が良いかもしれません。";
 
-    // 診断開始
-    if (data === "start_diagnosis") {
+} else if (score >= 30) {
 
-      await client.replyMessage(event.replyToken, {
-        type: "flex",
-        altText: "浮気診断スタート",
-        contents: {
-          type: "bubble",
-          body: {
-            type: "box",
-            layout: "vertical",
-            spacing: "md",
-            contents: [
-              {
-                type: "text",
-                text: "浮気診断スタート",
-                weight: "bold",
-                size: "xl"
-              },
-              {
-                type: "text",
-                text: "まずは行動タイプを選んでください",
-                wrap: true,
-                size: "sm",
-                color: "#666666"
-              }
-            ]
-          },
-          footer: {
-            type: "box",
-            layout: "vertical",
-            spacing: "sm",
-            contents: [
-              {
-                type: "button",
-                style: "primary",
-                action: {
-                  type: "postback",
-                  label: "昼型",
-                  data: "type_day"
-                }
-              },
-              {
-                type: "button",
-                style: "secondary",
-                action: {
-                  type: "postback",
-                  label: "夜型",
-                  data: "type_night"
-                }
-              }
-            ]
-          }
-        }
-      });
+  title = "危険レベル：低";
 
-      return;
-    }
+  comment =
+    "大きな異変は見られませんでした。\n\n" +
+    "ただし、浮気傾向は突然変化する場合もあります。\n\n" +
+    "小さな違和感を見逃さないことが大切です。";
 
-    // 昼型
-    if (data === "type_day") {
+} else {
 
-      await client.replyMessage(event.replyToken, {
-        type: "text",
-        text: "昼型ですね！スマホを隠すことはありますか？"
-      });
+  title = "危険レベル：かなり低";
 
-      return;
-    }
-
-    // 夜型
-    if (data === "type_night") {
-
-      await client.replyMessage(event.replyToken, {
-        type: "text",
-        text: "夜型ですね！最近帰宅時間は遅いですか？"
-      });
-
-      return;
-    }
-  }
-
-  // 通常メッセージ
-  if (event.type === "message") {
-
-    if (event.message.type !== "text") return;
-
-    const text = event.message.text;
-
-    // リッチメニュー以外を無視したい場合
-    if (
-      text !== "はい" &&
-      text !== "いいえ"
-    ) {
-      return;
-    }
-
-    // 簡易診断
-    let score = 0;
-
-    if (text === "はい") {
-      score += 40;
-    }
-
-    let result = "";
-
-    if (score >= 40) {
-      result = "浮気率は高めです…";
-    } else {
-      result = "浮気率は低そうです！";
-    }
-
-    await client.replyMessage(event.replyToken, {
-      type: "flex",
-      altText: "診断結果",
-      contents: {
-        type: "bubble",
-        hero: {
-          type: "image",
-          url: "https://images.unsplash.com/photo-1517841905240-472988babdf9",
-          size: "full",
-          aspectRatio: "20:13",
-          aspectMode: "cover"
-        },
-        body: {
-          type: "box",
-          layout: "vertical",
-          spacing: "md",
-          contents: [
-            {
-              type: "text",
-              text: "診断結果",
-              weight: "bold",
-              size: "xl"
-            },
-            {
-              type: "text",
-              text: result,
-              wrap: true,
-              size: "md"
-            }
-          ]
-        }
-      }
-    });
-
-    return;
-  }
+  comment =
+    "現時点では浮気の可能性は低そうです。\n\n" +
+    "ただ、油断しすぎず普段のコミュニケーションを大切にしていきましょう。";
 }
 
-const PORT = process.env.PORT || 3000;
+// =========================
+// LINE Flex Message送信
+// =========================
 
-app.listen(PORT, () => {
-  console.log(`Server running on ${PORT}`);
+await client.replyMessage(event.replyToken, {
+  type: "flex",
+  altText: "診断結果",
+  contents: {
+    type: "bubble",
+
+    hero: {
+      type: "image",
+      url: "https://images.unsplash.com/photo-1517841905240-472988babdf9",
+      size: "full",
+      aspectRatio: "20:13",
+      aspectMode: "cover"
+    },
+
+    body: {
+      type: "box",
+      layout: "vertical",
+      spacing: "md",
+      contents: [
+
+        {
+          type: "text",
+          text: title,
+          weight: "bold",
+          size: "xl"
+        },
+
+        {
+          type: "text",
+          text: `浮気率 ${score}%`,
+          size: "xxl",
+          weight: "bold",
+          color: "#ff3366"
+        },
+
+        {
+          type: "separator",
+          margin: "lg"
+        },
+
+        {
+          type: "text",
+          text: comment,
+          wrap: true,
+          size: "sm",
+          margin: "lg",
+          color: "#555555"
+        }
+      ]
+    },
+
+    footer: button
+      ? {
+          type: "box",
+          layout: "vertical",
+          spacing: "sm",
+          contents: [button]
+        }
+      : undefined
+  }
 });
