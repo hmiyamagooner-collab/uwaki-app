@@ -148,3 +148,155 @@ async function handleEvent(event) {
       )
     );
   }
+
+// =========================
+// スコア別コメント
+// =========================
+
+let title = "";
+let comment = "";
+let button = null;
+
+if (score >= 80) {
+
+  title = "危険レベル：高";
+
+  comment =
+    "浮気の可能性がかなり高い傾向があります。\n\n" +
+    "実際に相談される方の多くも、『違和感はあったけど確信が持てなかった』というケースがほとんどです。\n\n" +
+    "今後さらに状況が悪化する前に、一度専門スタッフへ相談してみませんか？";
+
+  button = {
+    type: "button",
+    style: "primary",
+    color: "#ff3366",
+    action: {
+      type: "uri",
+      label: "無料で相談する",
+      uri: "https://あなたの相談URL"
+    }
+  };
+
+} else if (score >= 60) {
+
+  title = "危険レベル：中";
+
+  comment =
+    "少し気になる行動が増えているようです。\n\n" +
+    "現時点では決定的ではありませんが、違和感を放置すると後から後悔するケースも少なくありません。\n\n" +
+    "今後の変化には注意した方が良いかもしれません。";
+
+} else if (score >= 30) {
+
+  title = "危険レベル：低";
+
+  comment =
+    "大きな異変は見られませんでした。\n\n" +
+    "ただし、浮気傾向は突然変化する場合もあります。\n\n" +
+    "小さな違和感を見逃さないことが大切です。";
+
+} else {
+
+  title = "危険レベル：かなり低";
+
+  comment =
+    "現時点では浮気の可能性は低そうです。\n\n" +
+    "ただ、油断しすぎず普段のコミュニケーションを大切にしていきましょう。";
+}
+
+// =========================
+// Flex Message送信
+// =========================
+
+await client.replyMessage(event.replyToken, {
+  type: "flex",
+  altText: "診断結果",
+
+  contents: {
+    type: "bubble",
+
+    hero: {
+      type: "image",
+      url: "https://images.unsplash.com/photo-1517841905240-472988babdf9",
+      size: "full",
+      aspectRatio: "20:13",
+      aspectMode: "cover"
+    },
+
+    body: {
+      type: "box",
+      layout: "vertical",
+      spacing: "md",
+
+      contents: [
+
+        // =========================
+        // タイトル
+        // =========================
+
+        {
+          type: "text",
+          text: "🕵 診断結果",
+          weight: "bold",
+          size: "xl"
+        },
+
+        // =========================
+        // 危険レベル
+        // =========================
+
+        {
+          type: "text",
+          text: title,
+          weight: "bold",
+          size: "lg",
+          color: "#ff3366",
+          margin: "md"
+        },
+
+        // =========================
+        // 浮気率
+        // =========================
+
+        {
+          type: "text",
+          text: `浮気率 ${score}%`,
+          size: "xxl",
+          weight: "bold",
+          color: "#ff3366"
+        },
+
+        {
+          type: "separator",
+          margin: "lg"
+        },
+
+        // =========================
+        // コメント
+        // =========================
+
+        {
+          type: "text",
+          text: comment,
+          wrap: true,
+          size: "sm",
+          margin: "lg",
+          color: "#555555"
+        }
+      ]
+    },
+
+    // =========================
+    // 相談ボタン
+    // =========================
+
+    footer: button
+      ? {
+          type: "box",
+          layout: "vertical",
+          spacing: "sm",
+          contents: [button]
+        }
+      : undefined
+  }
+});
