@@ -33,17 +33,6 @@ app.post('/webhook', line.middleware(config), async (req, res) => {
 
 async function handleEvent(event) {
 
-  if (text === '診断開始') {
-
-    step: 0,
-    score: 0
-  };
-
-  return client.replyMessage(event.replyToken, {
-    type: 'text',
-    text: `浮気占いスタート！\n\nQ1. ${questions[0]}\n\nはい / いいえ`
-  });
-}
   if (event.type !== 'message' || event.message.type !== 'text') {
     return null;
   }
@@ -51,7 +40,9 @@ async function handleEvent(event) {
   const userId = event.source.userId;
   const text = event.message.text;
 
-  if (!userData[userId]) {
+  // 診断開始
+  if (text === '診断開始') {
+
     userData[userId] = {
       step: 0,
       score: 0
@@ -63,6 +54,14 @@ async function handleEvent(event) {
     });
   }
 
+  // ユーザー未開始
+  if (!userData[userId]) {
+    return client.replyMessage(event.replyToken, {
+      type: 'text',
+      text: 'リッチメニューから「診断開始」を押してください。'
+    });
+  }
+
   const current = userData[userId];
 
   if (text === 'はい') {
@@ -71,6 +70,7 @@ async function handleEvent(event) {
 
   current.step++;
 
+  // 次の質問
   if (current.step < questions.length) {
 
     return client.replyMessage(event.replyToken, {
@@ -80,6 +80,7 @@ async function handleEvent(event) {
 
   } else {
 
+    // 結果表示
     let result = '';
 
     if (current.score <= 20) {
@@ -92,11 +93,13 @@ async function handleEvent(event) {
       result = '浮気リスク高め…！';
     }
 
+    const finalScore = current.score;
+
     delete userData[userId];
 
     return client.replyMessage(event.replyToken, {
       type: 'text',
-      text: `診断結果\n\nスコア：${current.score}点\n\n${result}`
+      text: `診断結果\n\nスコア：${finalScore}点\n\n${result}`
     });
   }
 }
