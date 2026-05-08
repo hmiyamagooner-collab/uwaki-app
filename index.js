@@ -33,7 +33,7 @@ const questions = [
 const userData = {};
 
 // =========================
-// はい・いいえ ボタン
+// 質問メッセージ
 // =========================
 function createQuestionMessage(questionNumber, questionText) {
 
@@ -107,29 +107,23 @@ async function handleEvent(event) {
   }
 
   // =========================
-  // 未開始
+  // 未開始ユーザー
   // =========================
   if (!userData[userId]) {
 
-    return client.replyMessage(event.replyToken, {
-      type: 'text',
-      text:
-`👇 リッチメニューから
-「診断開始」を押してください`
-    });
+    // 完全無視
+    return null;
   }
 
   const current = userData[userId];
 
   // =========================
-  // はい・いいえ以外
+  // 「はい」「いいえ」以外は無視
   // =========================
   if (text !== 'はい' && text !== 'いいえ') {
 
-    return client.replyMessage(event.replyToken, {
-      type: 'text',
-      text: '「はい」または「いいえ」を押してください。'
-    });
+    // 完全無視
+    return null;
   }
 
   // =========================
