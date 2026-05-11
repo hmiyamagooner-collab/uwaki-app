@@ -5,9 +5,6 @@ const line = require('@line/bot-sdk');
 
 const app = express();
 
-// =========================
-// LINE設定
-// =========================
 const config = {
   channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
   channelSecret: process.env.CHANNEL_SECRET
@@ -16,120 +13,56 @@ const config = {
 const client = new line.Client(config);
 
 // =========================
-// 質問一覧（点数付き）
+// 質問一覧
 // =========================
+
 const questions = [
-
-  {
-    text: "最近、スマホを見せなくなった",
-    point: 15
-  },
-
-  {
-    text: "返信が前より遅くなった",
-    point: 5
-  },
-
-  {
-    text: "急に予定を教えてくれなくなった",
-    point: 10
-  },
-
-  {
-    text: "外見や服装へのこだわりが急に増えた",
-    point: 10
-  },
-
-  {
-    text: "休日の行動が不自然に増えた",
-    point: 10
-  },
-
-  {
-    text: "LINEや通知を隠すことが増えた",
-    point: 15
-  },
-
-  {
-    text: "一緒にいる時にスマホを裏向きに置く",
-    point: 15
-  },
-
-  {
-    text: "急に優しくなった、または冷たくなった",
-    point: 5
-  },
-
-  {
-    text: "異性の話題を避けるようになった",
-    point: 10
-  },
-
-  {
-    text: "急に残業や飲み会が増えた",
-    point: 5
-  },
-
-  {
-    text: "知らない香水の匂いがすることがある",
-    point: 15
-  },
-
-  {
-    text: "スマホを常に持ち歩くようになった",
-    point: 10
-  },
-
-  {
-    text: "以前よりスキンシップが減った",
-    point: 10
-  },
-
-  {
-    text: "急に一人の時間を欲しがるようになった",
-    point: 5
-  },
-
-  {
-    text: "特定の曜日だけ予定が増えている",
-    point: 10
-  }
+  { text: '最近、スマホを見せなくなった', point: 15 },
+  { text: '返信が前より遅くなった', point: 5 },
+  { text: '急に予定を教えてくれなくなった', point: 10 },
+  { text: '外見や服装へのこだわりが急に増えた', point: 10 },
+  { text: '休日の行動が不自然に増えた', point: 10 },
+  { text: 'LINEや通知を隠すことが増えた', point: 15 },
+  { text: '一緒にいる時にスマホを裏向きに置く', point: 15 },
+  { text: '急に優しくなった、または冷たくなった', point: 5 },
+  { text: '異性の話題を避けるようになった', point: 10 },
+  { text: '急に残業や飲み会が増えた', point: 5 },
+  { text: '知らない香水の匂いがすることがある', point: 15 },
+  { text: 'スマホを常に持ち歩くようになった', point: 10 },
+  { text: '以前よりスキンシップが減った', point: 10 },
+  { text: '急に一人の時間を欲しがるようになった', point: 5 },
+  { text: '特定の曜日だけ予定が増えている', point: 10 }
 ];
 
 // =========================
-// ユーザー状態保存
+// ユーザー状態
 // =========================
+
 const userData = {};
 
 // =========================
-// 質問カード
+// 質問Flex
 // =========================
+
 function createQuestionMessage(questionNumber, questionData) {
 
   return {
     type: 'flex',
-
-    altText: `Q${questionNumber}`,
+    altText: '浮気占い',
 
     contents: {
-
       type: 'bubble',
 
-      size: 'mega',
-
       body: {
-
         type: 'box',
-
         layout: 'vertical',
-
         spacing: 'lg',
 
         contents: [
 
           {
             type: 'text',
-            text: '🕵 浮気診断',
+            text: '浮気占い🕵',
             weight: 'bold',
             size: 'xl',
             color: '#ff3366'
@@ -138,8 +71,8 @@ function createQuestionMessage(questionNumber, questionData) {
           {
             type: 'text',
             text: `Q${questionNumber}`,
-            weight: 'bold',
-            size: 'lg'
+            size: 'lg',
+            weight: 'bold'
           },
 
           {
@@ -153,43 +86,33 @@ function createQuestionMessage(questionNumber, questionData) {
       },
 
       footer: {
-
         type: 'box',
-
         layout: 'vertical',
-
         spacing: 'md',
 
         contents: [
 
-          // はいボタン
           {
             type: 'button',
-
             style: 'primary',
-
-            color: '#ff3366',
-
             height: 'lg',
+            color: '#ff3366',
 
             action: {
               type: 'message',
-              label: '✔ はい',
+              label: 'はい',
               text: 'はい'
             }
           },
 
-          // いいえボタン
           {
             type: 'button',
-
             style: 'secondary',
-
             height: 'lg',
 
             action: {
               type: 'message',
-              label: '✖ いいえ',
+              label: 'いいえ',
               text: 'いいえ'
             }
           }
@@ -202,42 +125,33 @@ function createQuestionMessage(questionNumber, questionData) {
 // =========================
 // Webhook
 // =========================
-app.post('/webhook', line.middleware(config), async (req, res) => {
 
-  console.log('========================');
-  console.log('Webhook受信');
-  console.log('========================');
+app.post('/webhook', line.middleware(config), async (req, res) => {
 
   res.status(200).end();
 
-  for (const event of req.body.events) {
+  try {
 
-    try {
+    await Promise.all(req.body.events.map(handleEvent));
 
-      await handleEvent(event);
+  } catch (err) {
 
-    } catch (err) {
-
-      console.error('Event Error:', err);
-    }
+    console.error(err);
   }
 });
 
 // =========================
 // イベント処理
 // =========================
+
 async function handleEvent(event) {
 
   try {
 
-    // =========================
-    // テキスト以外無視
-    // =========================
     if (
       event.type !== 'message' ||
       event.message.type !== 'text'
     ) {
-
       return null;
     }
 
@@ -247,26 +161,14 @@ async function handleEvent(event) {
     console.log('受信:', text);
 
     // =========================
-    // 30分放置でリセット
-    // =========================
-    if (
-      userData[userId] &&
-      Date.now() - userData[userId].createdAt >
-      1000 * 60 * 30
-    ) {
-
-      delete userData[userId];
-    }
-
-    // =========================
     // 診断開始
     // =========================
+
     if (text === '診断開始') {
 
       userData[userId] = {
         step: 0,
-        score: 0,
-        createdAt: Date.now()
+        score: 0
       };
 
       return client.replyMessage(
@@ -279,32 +181,33 @@ async function handleEvent(event) {
     }
 
     // =========================
-    // 未開始ユーザー無視
+    // 未開始なら無視
     // =========================
+
     if (!userData[userId]) {
+      return null;
+    }
+
+    // =========================
+    // はい・いいえ以外無視
+    // =========================
+
+    if (
+      text !== 'はい' &&
+      text !== 'いいえ'
+    ) {
       return null;
     }
 
     const current = userData[userId];
 
     // =========================
-    // はい・いいえ以外無視
-    // =========================
-    if (
-      text !== 'はい' &&
-      text !== 'いいえ'
-    ) {
-
-      return null;
-    }
-
-    // =========================
     // 点数加算
     // =========================
+
     if (text === 'はい') {
 
-      current.score +=
-        questions[current.step].point;
+      current.score += questions[current.step].point;
     }
 
     current.step++;
@@ -312,6 +215,7 @@ async function handleEvent(event) {
     // =========================
     // 次の質問
     // =========================
+
     if (current.step < questions.length) {
 
       return client.replyMessage(
@@ -324,72 +228,67 @@ async function handleEvent(event) {
     }
 
     // =========================
-    // 最大スコア
+    // 結果計算
     // =========================
+
     const maxScore = questions.reduce(
-      (total, q) => total + q.point,
+      (sum, q) => sum + q.point,
       0
     );
 
-    // =========================
-    // %換算
-    // =========================
     const score = Math.round(
       (current.score / maxScore) * 100
     );
 
-    // =========================
-    // コメント生成
-    // =========================
     let title = '';
     let comment = '';
+    let color = '';
 
     if (score >= 80) {
 
-      title = '危険レベル：非常に高い';
+      title = '危険度：非常に高い';
+      color = '#ff0033';
 
       comment =
-        '浮気の可能性がかなり高い傾向があります。\n\n' +
-        '実際の相談ケースでも近い行動パターンが多く確認されています。\n\n' +
-        '状況が悪化する前に、早めの確認や相談をおすすめします。';
+        '浮気の可能性がかなり高い傾向があります。';
 
     } else if (score >= 60) {
 
-      title = '危険レベル：高';
+      title = '危険度：高';
+      color = '#ff6600';
 
       comment =
-        '気になる行動がかなり増えているようです。\n\n' +
-        '今後さらに注意深く様子を見る必要があるかもしれません。';
+        '気になる行動がかなり増えています。';
 
     } else if (score >= 40) {
 
-      title = '危険レベル：中';
+      title = '危険度：中';
+      color = '#ffcc00';
 
       comment =
-        '一部気になる傾向があります。\n\n' +
-        '現時点では決定的ではありませんが注意は必要です。';
+        '注意が必要な傾向があります。';
 
     } else {
 
-      title = '危険レベル：低';
+      title = '危険度：低';
+      color = '#00cc66';
 
       comment =
-        '現時点では大きな問題は見られませんでした。';
+        '現時点では大きな問題は見られません。';
     }
 
-    // =========================
-    // 危険度ゲージ
-    // =========================
-    const gaugeWidth = `${score}%`;
-
-    // =========================
-    // ユーザーデータ削除
-    // =========================
     delete userData[userId];
 
     // =========================
-    // 結果カード
+    // ゲージ幅
     // =========================
+
+    const gaugeWidth = `${score}%`;
+
+    // =========================
+    // 結果Flex
+    // =========================
+
     return client.replyMessage(event.replyToken, {
 
       type: 'flex',
@@ -402,45 +301,6 @@ async function handleEvent(event) {
 
         size: 'mega',
 
-        hero: {
-
-          type: 'box',
-
-          layout: 'vertical',
-
-          backgroundColor: '#ff3366',
-
-          paddingAll: '20px',
-
-          contents: [
-
-            {
-              type: 'text',
-              text: '🕵 浮気診断結果',
-              color: '#ffffff',
-              weight: 'bold',
-              size: 'xl'
-            },
-
-            {
-              type: 'text',
-              text: `${score}%`,
-              color: '#ffffff',
-              weight: 'bold',
-              size: '5xl',
-              margin: 'md'
-            },
-
-            {
-              type: 'text',
-              text: title,
-              color: '#ffffff',
-              size: 'md',
-              margin: 'md'
-            }
-          ]
-        },
-
         body: {
 
           type: 'box',
@@ -451,93 +311,62 @@ async function handleEvent(event) {
 
           contents: [
 
-            // 危険度ゲージ
             {
               type: 'text',
-              text: '危険度ゲージ',
+              text: '🕵 診断結果',
               weight: 'bold',
-              size: 'md'
+              size: 'xl'
             },
 
             {
+              type: 'text',
+              text: title,
+              weight: 'bold',
+              size: 'lg',
+              color: color
+            },
+
+            {
+              type: 'text',
+              text: `浮気率 ${score}%`,
+              weight: 'bold',
+              size: 'xxl',
+              color: color
+            },
+
+            // ゲージ背景
+            {
               type: 'box',
-
               layout: 'vertical',
-
+              margin: 'md',
               backgroundColor: '#eeeeee',
-
-              cornerRadius: '20px',
-
+              cornerRadius: 'md',
               height: '20px',
 
               contents: [
-
                 {
                   type: 'box',
-
                   layout: 'vertical',
-
-                  backgroundColor: '#ff3366',
-
+                  backgroundColor: color,
                   width: gaugeWidth,
-
-                  cornerRadius: '20px',
-
                   height: '20px',
-
+                  cornerRadius: 'md',
                   contents: []
                 }
               ]
             },
 
-            // コメント
             {
-              type: 'box',
-
-              layout: 'vertical',
-
-              backgroundColor: '#f7f7f7',
-
-              cornerRadius: '12px',
-
-              paddingAll: '15px',
-
-              contents: [
-
-                {
-                  type: 'text',
-                  text: comment,
-                  wrap: true,
-                  size: 'sm',
-                  color: '#555555'
-                }
-              ]
-            }
-          ]
-        },
-
-        footer: {
-
-          type: 'box',
-
-          layout: 'vertical',
-
-          spacing: 'sm',
-
-          contents: [
+              type: 'separator',
+              margin: 'lg'
+            },
 
             {
-              type: 'button',
-
-              style: 'primary',
-
-              color: '#ff3366',
-
-              action: {
-                type: 'message',
-                label: 'もう一度診断する',
-                text: '診断開始'
-              }
+              type: 'text',
+              text: comment,
+              wrap: true,
+              size: 'md',
+              margin: 'lg'
             }
           ]
         }
@@ -546,13 +375,14 @@ async function handleEvent(event) {
 
   } catch (err) {
 
-    console.error('handleEvent Error:', err);
+    console.error(err);
   }
 }
 
 // =========================
-// サーバー起動
+// 起動
 // =========================
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
