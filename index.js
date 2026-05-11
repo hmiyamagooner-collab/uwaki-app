@@ -45,7 +45,7 @@ function createQuestionMessage(questionNumber, questionText) {
     altText: `Q${questionNumber}`,
     template: {
       type: 'buttons',
-      title: '🔮 浮気占い',
+      title: '🕵浮気診断',
       text: `Q${questionNumber}\n${questionText}`,
       actions: [
         {
