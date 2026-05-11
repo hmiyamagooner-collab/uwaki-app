@@ -13,84 +13,99 @@ const config = {
 const client = new line.Client(config);
 
 // =========================
-// 質問一覧（点数付き）
+// 質問一覧
 // =========================
 
 const questions = [
 
   {
     text: "最近、スマホを見せなくなった",
-    point: 15
+    point: 15,
+    category: "隠し事"
   },
 
   {
     text: "返信が前より遅くなった",
-    point: 5
+    point: 5,
+    category: "連絡"
   },
 
   {
     text: "急に予定を教えてくれなくなった",
-    point: 10
+    point: 10,
+    category: "行動"
   },
 
   {
     text: "外見や服装へのこだわりが急に増えた",
-    point: 10
+    point: 10,
+    category: "外見"
   },
 
   {
     text: "休日の行動が不自然に増えた",
-    point: 10
+    point: 10,
+    category: "行動"
   },
 
   {
     text: "LINEや通知を隠すことが増えた",
-    point: 15
+    point: 15,
+    category: "隠し事"
   },
 
   {
     text: "一緒にいる時にスマホを裏向きに置く",
-    point: 15
+    point: 15,
+    category: "隠し事"
   },
 
   {
     text: "急に優しくなった、または冷たくなった",
-    point: 5
+    point: 5,
+    category: "態度"
   },
 
   {
     text: "異性の話題を避けるようになった",
-    point: 10
+    point: 10,
+    category: "態度"
   },
 
   {
     text: "急に残業や飲み会が増えた",
-    point: 5
+    point: 5,
+    category: "行動"
   },
 
   {
     text: "知らない香水の匂いがすることがある",
-    point: 15
+    point: 15,
+    category: "外見"
   },
 
   {
     text: "スマホを常に持ち歩くようになった",
-    point: 10
+    point: 10,
+    category: "隠し事"
   },
 
   {
     text: "以前よりスキンシップが減った",
-    point: 10
+    point: 10,
+    category: "態度"
   },
 
   {
     text: "急に一人の時間を欲しがるようになった",
-    point: 5
+    point: 5,
+    category: "行動"
   },
 
   {
     text: "特定の曜日だけ予定が増えている",
-    point: 10
+    point: 10,
+    category: "行動"
   }
 ];
 
@@ -107,33 +122,90 @@ const userData = {};
 function createQuestionMessage(questionNumber, questionData) {
 
   return {
-    type: 'text',
+    type: "flex",
 
-    text:
-`浮気診断🕵
+    altText: `Q${questionNumber}`,
 
-Q${questionNumber}
-${questionData.text}`,
+    contents: {
 
-    quickReply: {
-      items: [
-        {
-          type: 'action',
-          action: {
-            type: 'message',
-            label: 'はい',
-            text: 'はい'
+      type: "bubble",
+
+      body: {
+
+        type: "box",
+
+        layout: "vertical",
+
+        spacing: "lg",
+
+        contents: [
+
+          {
+            type: "text",
+            text: "浮気診断🕵",
+            weight: "bold",
+            size: "xl",
+            color: "#ff3366"
+          },
+
+          {
+            type: "text",
+            text: `Q${questionNumber}`,
+            weight: "bold",
+            size: "lg"
+          },
+
+          {
+            type: "text",
+            text: questionData.text,
+            wrap: true,
+            size: "md",
+            margin: "md"
           }
-        },
-        {
-          type: 'action',
-          action: {
-            type: 'message',
-            label: 'いいえ',
-            text: 'いいえ'
+        ]
+      },
+
+      footer: {
+
+        type: "box",
+
+        layout: "vertical",
+
+        spacing: "md",
+
+        contents: [
+
+          {
+            type: "button",
+
+            style: "primary",
+
+            height: "md",
+
+            color: "#ff3366",
+
+            action: {
+              type: "message",
+              label: "はい",
+              text: "はい"
+            }
+          },
+
+          {
+            type: "button",
+
+            style: "secondary",
+
+            height: "md",
+
+            action: {
+              type: "message",
+              label: "いいえ",
+              text: "いいえ"
+            }
           }
-        }
-      ]
+        ]
+      }
     }
   };
 }
@@ -144,10 +216,6 @@ ${questionData.text}`,
 
 app.post('/webhook', line.middleware(config), async (req, res) => {
 
-  console.log('========================');
-  console.log('Webhook受信');
-  console.log('========================');
-
   res.status(200).end();
 
   try {
@@ -156,7 +224,7 @@ app.post('/webhook', line.middleware(config), async (req, res) => {
 
   } catch (err) {
 
-    console.error('Webhook Error:', err);
+    console.error(err);
   }
 });
 
@@ -168,26 +236,15 @@ async function handleEvent(event) {
 
   try {
 
-    console.log('イベント受信');
-
-    // =========================
-    // テキスト以外無視
-    // =========================
-
     if (
       event.type !== 'message' ||
       event.message.type !== 'text'
     ) {
-
-      console.log('テキスト以外');
-
       return null;
     }
 
     const userId = event.source.userId;
     const text = event.message.text.trim();
-
-    console.log('受信テキスト:', text);
 
     // =========================
     // 診断開始
@@ -195,11 +252,17 @@ async function handleEvent(event) {
 
     if (text === '診断開始') {
 
-      console.log('診断開始');
-
       userData[userId] = {
         step: 0,
-        score: 0
+        score: 0,
+
+        analysis: {
+          隠し事: 0,
+          連絡: 0,
+          行動: 0,
+          外見: 0,
+          態度: 0
+        }
       };
 
       return client.replyMessage(
@@ -211,30 +274,16 @@ async function handleEvent(event) {
       );
     }
 
-    // =========================
-    // 未開始ユーザー
-    // =========================
-
     if (!userData[userId]) {
-
-      console.log('未開始ユーザー');
-
       return null;
     }
 
     const current = userData[userId];
 
-    // =========================
-    // はい・いいえ以外無視
-    // =========================
-
     if (
       text !== 'はい' &&
       text !== 'いいえ'
     ) {
-
-      console.log('無効入力');
-
       return null;
     }
 
@@ -246,23 +295,20 @@ async function handleEvent(event) {
 
       current.score += questions[current.step].point;
 
-      console.log(
-        `加算点数: ${questions[current.step].point}`
-      );
+      const category =
+        questions[current.step].category;
+
+      current.analysis[category] +=
+        questions[current.step].point;
     }
 
     current.step++;
-
-    console.log(`現在STEP: ${current.step}`);
-    console.log(`現在スコア: ${current.score}`);
 
     // =========================
     // 次の質問
     // =========================
 
     if (current.step < questions.length) {
-
-      console.log('次の質問へ');
 
       return client.replyMessage(
         event.replyToken,
@@ -274,7 +320,7 @@ async function handleEvent(event) {
     }
 
     // =========================
-    // 最大スコア計算
+    // 最大スコア
     // =========================
 
     const maxScore = questions.reduce(
@@ -290,11 +336,54 @@ async function handleEvent(event) {
       (current.score / maxScore) * 100
     );
 
-    console.log(`最大スコア: ${maxScore}`);
-    console.log(`最終スコア: ${score}%`);
+    // =========================
+    // AI分析
+    // =========================
+
+    const analysis = current.analysis;
+
+    let aiComment = '';
+
+    const maxCategory = Object.keys(analysis).reduce(
+      (a, b) =>
+        analysis[a] > analysis[b]
+          ? a
+          : b
+    );
+
+    if (maxCategory === '隠し事') {
+
+      aiComment =
+        'AI分析では「隠し事」の傾向が特に強く検出されました。\n\n' +
+        'スマホ管理や通知の扱いに注意が必要かもしれません。';
+
+    } else if (maxCategory === '行動') {
+
+      aiComment =
+        'AI分析では「行動パターン」の変化が目立っています。\n\n' +
+        '急な予定変更や行動の不自然さに注意が必要です。';
+
+    } else if (maxCategory === '外見') {
+
+      aiComment =
+        'AI分析では「外見変化」の傾向が強く見られました。\n\n' +
+        '急な美容・服装変化は心理変化のサインの場合があります。';
+
+    } else if (maxCategory === '態度') {
+
+      aiComment =
+        'AI分析では「態度変化」が強く出ています。\n\n' +
+        '感情の距離感に変化が起きている可能性があります。';
+
+    } else {
+
+      aiComment =
+        'AI分析では「連絡頻度」の変化が検出されました。\n\n' +
+        '返信タイミングや連絡習慣の変化に注意してください。';
+    }
 
     // =========================
-    // コメント生成
+    // コメント
     // =========================
 
     let title = '';
@@ -306,7 +395,6 @@ async function handleEvent(event) {
 
       comment =
         '浮気の可能性がかなり高い傾向があります。\n\n' +
-        '実際の相談ケースでも近い行動パターンが多く確認されています。\n\n' +
         '状況が悪化する前に、早めの確認や相談をおすすめします。';
 
     } else if (score >= 60) {
@@ -333,18 +421,10 @@ async function handleEvent(event) {
         '現時点では大きな問題は見られませんでした。';
     }
 
-    console.log('診断結果生成完了');
-
-    // =========================
-    // ユーザーデータ削除
-    // =========================
-
     delete userData[userId];
 
-    console.log('ユーザーデータ削除完了');
-
     // =========================
-    // Flex Message送信
+    // 診断結果
     // =========================
 
     return client.replyMessage(event.replyToken, {
@@ -390,6 +470,43 @@ async function handleEvent(event) {
               color: '#ff3366'
             },
 
+            // グラフバー
+
+            {
+              type: "box",
+              layout: "vertical",
+              margin: "lg",
+              contents: [
+
+                {
+                  type: "box",
+                  layout: "vertical",
+                  backgroundColor: "#eeeeee",
+                  cornerRadius: "md",
+                  height: "20px",
+                  contents: [
+
+                    {
+                      type: "box",
+                      layout: "vertical",
+
+                      backgroundColor:
+                        score >= 80
+                          ? "#ff3366"
+                          : score >= 60
+                          ? "#ff8800"
+                          : "#33cc66",
+
+                      width: `${score}%`,
+                      height: "20px",
+                      cornerRadius: "md",
+                      contents: []
+                    }
+                  ]
+                }
+              ]
+            },
+
             {
               type: 'separator',
               margin: 'lg'
@@ -402,6 +519,58 @@ async function handleEvent(event) {
               size: 'sm',
               margin: 'lg',
               color: '#555555'
+            },
+
+            // レーダー
+
+            {
+              type: 'text',
+              text: 'AI分析レーダー',
+              weight: 'bold',
+              size: 'md',
+              margin: 'xl'
+            },
+
+            {
+              type: 'text',
+
+              text:
+`隠し事  ${'■'.repeat(Math.floor(analysis['隠し事'] / 5))}
+
+連絡      ${'■'.repeat(Math.floor(analysis['連絡'] / 5))}
+
+行動      ${'■'.repeat(Math.floor(analysis['行動'] / 5))}
+
+外見      ${'■'.repeat(Math.floor(analysis['外見'] / 5))}
+
+態度      ${'■'.repeat(Math.floor(analysis['態度'] / 5))}`,
+
+              wrap: true,
+              margin: 'md',
+              size: 'sm',
+              color: '#555555'
+            },
+
+            {
+              type: 'separator',
+              margin: 'lg'
+            },
+
+            {
+              type: 'text',
+              text: '🤖 AI分析コメント',
+              weight: 'bold',
+              size: 'md',
+              margin: 'lg'
+            },
+
+            {
+              type: 'text',
+              text: aiComment,
+              wrap: true,
+              size: 'sm',
+              margin: 'md',
+              color: '#555555'
             }
           ]
         }
@@ -410,7 +579,7 @@ async function handleEvent(event) {
 
   } catch (err) {
 
-    console.error('handleEvent Error:', err);
+    console.error(err);
   }
 }
 
