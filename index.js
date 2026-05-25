@@ -7,7 +7,7 @@ app.use(express.static(path.join(__dirname)));
 const config = { channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN, channelSecret: process.env.CHANNEL_SECRET };
 const client = new line.Client(config);
 
-const TOP_IMAGE_URL = 'https://uwaki-app.onrender.com/stealthfile_banner_optimized.jpg';
+const TOP_IMAGE_URL = 'https://uwaki-app.onrender.com/top2.png';
 
 const COLOR = { greige:'#E8DFD8', paper:'#F4EFEA', brown:'#3B2F2F', black:'#1E1E1E', gold:'#C6A969', textOnDark:'#CFC6BC', subOnDark:'#B8AFA6', textOnLight:'#3B2F2F', subOnLight:'#7A6F66', hintOnLight:'#9A8E84', cardOnDark:'#262220', trackLight:'#E2D8CF', trackDark:'#333333' };
 const ANSWERS = { 'あてはまる':10, '少し気になる':5, '気にならない':0 };
