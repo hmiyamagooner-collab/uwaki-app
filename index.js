@@ -7,7 +7,7 @@ app.use(express.static(path.join(__dirname)));
 const config = { channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN, channelSecret: process.env.CHANNEL_SECRET };
 const client = new line.Client(config);
 
-const TOP_IMAGE_URL = 'https://uwaki-app.onrender.com/top.jpg';
+const TOP_IMAGE_URL = 'https://uwaki-app.onrender.com/top.png';
 
 const COLOR = { greige:'#E8DFD8', paper:'#F4EFEA', brown:'#3B2F2F', black:'#1E1E1E', gold:'#C6A969', textOnDark:'#CFC6BC', subOnDark:'#B8AFA6', textOnLight:'#3B2F2F', subOnLight:'#7A6F66', hintOnLight:'#9A8E84', cardOnDark:'#262220', trackLight:'#E2D8CF', trackDark:'#333333' };
 const ANSWERS = { 'あてはまる':10, '少し気になる':5, '気にならない':0 };
@@ -37,7 +37,7 @@ const userData = {};
 
 function brandHeader(r){const c=[{type:'text',text:'STEALTH FILE',size:'xs',weight:'bold',color:COLOR.gold,flex:0}];if(r){c.push({type:'text',text:r,size:'xs',color:COLOR.hintOnLight,align:'end'});}return {type:'box',layout:'horizontal',contents:c};}
 
-function createTopMessage(){return {type:'flex',altText:'パートナー心理分析をはじめる',contents:{type:'bubble',body:{type:'box',layout:'vertical',spacing:'none',paddingAll:'0px',backgroundColor:'#1E1E1E',action:{type:'message',label:'分析をはじめる',text:'分析スタート'},contents:[{type:'image',url:TOP_IMAGE_URL,size:'full',aspectRatio:'1536:1024',aspectMode:'fit'}]}}};}
+function createTopMessage(){return {type:'flex',altText:'パートナー心理分析をはじめる',contents:{type:'bubble',body:{type:'box',layout:'vertical',spacing:'none',paddingAll:'0px',backgroundColor:'#1E1E1E',action:{type:'message',label:'分析をはじめる',text:'分析スタート'},contents:[{type:'image',url:TOP_IMAGE_URL,size:'full',aspectRatio:'1086:1448',aspectMode:'fit'}]}}};}
 
 function createGenderMessage(){return {type:'flex',altText:'性別を教えてください',contents:{type:'bubble',styles:{body:{backgroundColor:COLOR.paper}},body:{type:'box',layout:'vertical',spacing:'md',paddingAll:'22px',contents:[brandHeader(''),{type:'text',text:'性別を教えてください',size:'md',weight:'bold',color:COLOR.textOnLight,align:'center',margin:'md'},{type:'text',text:'より正確に分析するため、\n選択してください。',wrap:true,size:'sm',color:COLOR.subOnLight,align:'center',margin:'sm'},{type:'box',layout:'vertical',spacing:'sm',margin:'lg',contents:GENDERS.map(g=>({type:'button',style:'secondary',height:'md',action:{type:'message',label:g,text:g}}))}]}}};}
 
