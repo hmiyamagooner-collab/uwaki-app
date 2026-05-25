@@ -134,7 +134,8 @@ function createTopMessage() {
         size: 'full',
         aspectRatio: '1536:1024',
         aspectMode: 'fit',
-        backgroundColor: '#1E1E1E'
+        backgroundColor: '#1E1E1E',
+        action: { type: 'message', label: '分析スタート', text: '分析スタート' }
       },
       styles: { body: { backgroundColor: COLOR.greige } },
       body: {
