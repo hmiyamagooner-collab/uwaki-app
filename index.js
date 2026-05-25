@@ -128,12 +128,13 @@ function createTopMessage() {
     altText: 'パートナー心理分析をはじめる',
     contents: {
       type: 'bubble',
-      hero: {
+     hero: {
         type: 'image',
         url: TOP_IMAGE_URL,
         size: 'full',
-        aspectRatio: '3:2',
-        aspectMode: 'cover'
+        aspectRatio: '1536:1024',
+        aspectMode: 'fit',
+        backgroundColor: '#1E1E1E'
       },
       styles: { body: { backgroundColor: COLOR.greige } },
       body: {
