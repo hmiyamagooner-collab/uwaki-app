@@ -37,7 +37,7 @@ const userData = {};
 
 function brandHeader(r){const c=[{type:'text',text:'STEALTH FILE',size:'xs',weight:'bold',color:COLOR.gold,flex:0}];if(r){c.push({type:'text',text:r,size:'xs',color:COLOR.hintOnLight,align:'end'});}return {type:'box',layout:'horizontal',contents:c};}
 
-function createTopMessage(){return {type:'flex',altText:'パートナー心理分析をはじめる',contents:{type:'bubble',body:{type:'box',layout:'vertical',spacing:'none',paddingAll:'0px',backgroundColor:'#1E1E1E',action:{type:'message',label:'分析をはじめる',text:'分析スタート'},contents:[{type:'image',url:TOP_IMAGE_URL,size:'full',aspectRatio:'1536:1024',aspectMode:'fit'},{type:'box',layout:'vertical',paddingAll:'14px',contents:[{type:'text',text:'その違和感、気のせいですか？',size:'sm',color:COLOR.gold,align:'center',weight:'bold'},{type:'text',text:'15の質問で関係性をそっとチェック。',size:'xs',color:COLOR.textOnDark,align:'center',margin:'sm'}]}]}}};}
+function createTopImage(){return {type:'image',originalContentUrl:TOP_IMAGE_URL,previewImageUrl:TOP_IMAGE_URL};}
 
 function createGenderMessage(){return {type:'flex',altText:'性別を教えてください',contents:{type:'bubble',styles:{body:{backgroundColor:COLOR.paper}},body:{type:'box',layout:'vertical',spacing:'md',paddingAll:'22px',contents:[brandHeader(''),{type:'text',text:'性別を教えてください',size:'md',weight:'bold',color:COLOR.textOnLight,align:'center',margin:'md'},{type:'text',text:'より正確に分析するため、\n選択してください。',wrap:true,size:'sm',color:COLOR.subOnLight,align:'center',margin:'sm'},{type:'box',layout:'vertical',spacing:'sm',margin:'lg',contents:GENDERS.map(g=>({type:'button',style:'secondary',height:'md',action:{type:'message',label:g,text:g}}))}]}}};}
 
@@ -53,14 +53,12 @@ app.post('/webhook',line.middleware(config),async(req,res)=>{res.status(200).end
 
 async function handleEvent(event){try{if(event.type!=='message'||event.message.type!=='text')return null;const userId=event.source.userId;const text=event.message.text.trim();
 
-if(text==='分析開始'||text==='心理分析'||text==='診断開始'||text==='診断'){return client.replyMessage(event.replyToken,createTopMessage());}
-
-if(text==='分析スタート'||text==='診断スタート'){userData[userId]={phase:'gender',step:0,score:0,gender:null,age:null,analysis:{距離感:0,連絡の変化:0,生活リズム:0,印象の変化:0,気持ちの揺れ:0}};return client.replyMessage(event.replyToken,createGenderMessage());}
+if(text==='分析開始'||text==='心理分析'||text==='診断開始'||text==='診断'||text==='分析スタート'||text==='診断スタート'){userData[userId]={phase:'gender',step:0,score:0,gender:null,age:null,analysis:{距離感:0,連絡の変化:0,生活リズム:0,印象の変化:0,気持ちの揺れ:0}};return client.replyMessage(event.replyToken,[createTopImage(),createGenderMessage()]);}
 
 if(text==='相談したい'){return client.replyMessage(event.replyToken,{type:'text',text:'メッセージありがとうございます。\nどんな小さなことでも大丈夫です。気になっていることを、よかったらこのまま送ってくださいね。担当者がやさしくお返事します。'});}
 
 const current=userData[userId];
-if(!current){return client.replyMessage(event.replyToken,createTopMessage());}
+if(!current){userData[userId]={phase:'gender',step:0,score:0,gender:null,age:null,analysis:{距離感:0,連絡の変化:0,生活リズム:0,印象の変化:0,気持ちの揺れ:0}};return client.replyMessage(event.replyToken,[createTopImage(),createGenderMessage()]);}
 
 if(current.phase==='gender'){if(!GENDERS.includes(text)){return client.replyMessage(event.replyToken,{type:'text',text:'下のボタンから「男性」「女性」のいずれかを選んでくださいね。'});}current.gender=text;current.phase='age';return client.replyMessage(event.replyToken,createAgeMessage());}
 
