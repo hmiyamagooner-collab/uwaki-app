@@ -13,273 +13,477 @@ const config = {
 const client = new line.Client(config);
 
 // =========================
-// 質問一覧
+// カラーパレット（リブランディング）
 // =========================
+const COLOR = {
+  greige: '#E8DFD8',     // メイン背景（柔らかい）
+  paper:  '#F4EFEA',     // 質問画面の少し明るい背景
+  brown:  '#3B2F2F',     // ダークブラウン（メインボタン・見出し）
+  black:  '#1E1E1E',     // ソフトブラック（結果画面）
+  gold:   '#C6A969',     // ゴールド（アクセント）
+  olive:  '#7A8B6F',     // オリーブ（補助）
+  textOnDark:  '#CFC6BC',
+  subOnDark:   '#B8AFA6',
+  textOnLight: '#3B2F2F',
+  subOnLight:  '#7A6F66',
+  hintOnLight: '#9A8E84',
+  cardOnDark:  '#262220',
+  trackLight:  '#E2D8CF',
+  trackDark:   '#333333'
+};
 
+// =========================
+// 回答スケール（3段階）
+// あてはまる=10 / 少し気になる=5 / 気にならない=0
+// =========================
+const ANSWERS = {
+  'あてはまる': 10,
+  '少し気になる': 5,
+  '気にならない': 0
+};
+const ANSWER_LABELS = Object.keys(ANSWERS);
+
+// =========================
+// 質問一覧（文言を心理分析トーンへ）
+// カテゴリ：距離感 / 連絡の変化 / 生活リズム / 気持ちの揺れ
+// =========================
 const questions = [
+  // 連絡の変化
+  { text: '最近、連絡の返信が前よりそっけなく感じる', category: '連絡の変化' },
+  { text: 'スマホを見せたがらない様子が増えた気がする', category: '連絡の変化' },
+  { text: '一緒にいる時、スマホを裏返して置くようになった', category: '連絡の変化' },
+  { text: '通知や画面を、さりげなく隠すことがある', category: '連絡の変化' },
 
-  // 隠し事
-  {
-    text: "最近、スマホを見せなくなった",
-    point: 10,
-    category: "隠し事"
-  },
+  // 生活リズム
+  { text: '予定を前ほど教えてくれなくなった', category: '生活リズム' },
+  { text: '急な外出や残業・飲み会が増えた', category: '生活リズム' },
+  { text: '特定の曜日だけ、予定が入りやすい気がする', category: '生活リズム' },
+  { text: '休日の過ごし方が、以前と変わってきた', category: '生活リズム' },
 
-  {
-    text: "LINEや通知を隠すことが増えた",
-    point: 10,
-    category: "隠し事"
-  },
+  // 気持ちの揺れ
+  { text: '急に優しくなったり、冷たくなったりする', category: '気持ちの揺れ' },
+  { text: '身だしなみや見た目を、急に気にし始めた', category: '気持ちの揺れ' },
+  { text: '知らない香りがすることがある', category: '気持ちの揺れ' },
+  { text: '持ち物や雰囲気に、小さな変化を感じる', category: '気持ちの揺れ' },
 
-  {
-    text: "一緒にいる時にスマホを裏向きに置く",
-    point: 10,
-    category: "隠し事"
-  },
-
-  {
-    text: "スマホを常に持ち歩くようになった",
-    point: 10,
-    category: "隠し事"
-  },
-
-  // 連絡
-  {
-    text: "返信が前より遅くなった",
-    point: 10,
-    category: "連絡"
-  },
-
-  {
-    text: "既読・未読スルーが増えた",
-    point: 10,
-    category: "連絡"
-  },
-
-  {
-    text: "電話に出ないことが増えた",
-    point: 10,
-    category: "連絡"
-  },
-
-  {
-    text: "連絡の内容がそっけなくなった",
-    point: 10,
-    category: "連絡"
-  },
-
-  // 行動
-  {
-    text: "急に予定を教えてくれなくなった",
-    point: 10,
-    category: "行動"
-  },
-
-  {
-    text: "休日の行動が不自然に増えた",
-    point: 10,
-    category: "行動"
-  },
-
-  {
-    text: "急に残業や飲み会が増えた",
-    point: 10,
-    category: "行動"
-  },
-
-  {
-    text: "特定の曜日だけ予定が増えている",
-    point: 10,
-    category: "行動"
-  },
-
-  // 外見
-  {
-    text: "外見や服装へのこだわりが急に増えた",
-    point: 10,
-    category: "外見"
-  },
-
-  {
-    text: "知らない香水の匂いがすることがある",
-    point: 10,
-    category: "外見"
-  },
-
-  {
-    text: "急に美容や体型を気にするようになった",
-    point: 10,
-    category: "外見"
-  },
-
-  {
-    text: "下着や持ち物に変化が増えた",
-    point: 10,
-    category: "外見"
-  },
-
-  // 態度
-  {
-    text: "急に優しくなった、または冷たくなった",
-    point: 10,
-    category: "態度"
-  },
-
-  {
-    text: "以前よりスキンシップが減った",
-    point: 10,
-    category: "態度"
-  },
-
-  {
-    text: "異性の話題を避けるようになった",
-    point: 10,
-    category: "態度"
-  },
-
-  {
-    text: "一緒にいる時間を面倒がるようになった",
-    point: 10,
-    category: "態度"
-  }
+  // 距離感
+  { text: '一緒に過ごす時間を、面倒がるようになった', category: '距離感' },
+  { text: '以前よりスキンシップや会話が減った', category: '距離感' },
+  { text: '異性の話題を、なんとなく避ける', category: '距離感' },
+  { text: '「前と違う」と感じる瞬間が増えた', category: '距離感' }
 ];
 
-// =========================
-// カテゴリ最大値
-// =========================
-
-const categoryMax = {
-
-  隠し事: 40,
-  連絡: 40,
-  行動: 40,
-  外見: 40,
-  態度: 40
-};
+// カテゴリごとの最大点（質問数 × 10）
+const categoryMax = questions.reduce((acc, q) => {
+  acc[q.category] = (acc[q.category] || 0) + 10;
+  return acc;
+}, {});
 
 // =========================
 // ユーザー状態
 // =========================
-
 const userData = {};
 
-// =========================
-// 質問表示
-// =========================
+const RADAR_KEYS = ['距離感', '連絡の変化', '生活リズム', '気持ちの揺れ'];
 
+// =========================
+// 共通：ヘッダー行
+// =========================
+function brandHeader(rightText) {
+  const contents = [
+    {
+      type: 'text',
+      text: 'STEALTH FILE',
+      size: 'xs',
+      weight: 'bold',
+      color: COLOR.gold,
+      flex: 0
+    }
+  ];
+  if (rightText) {
+    contents.push({
+      type: 'text',
+      text: rightText,
+      size: 'xs',
+      color: COLOR.hintOnLight,
+      align: 'end'
+    });
+  }
+  return {
+    type: 'box',
+    layout: 'horizontal',
+    contents
+  };
+}
+
+// =========================
+// ① 診断開始画面
+// =========================
+function createStartMessage() {
+  return {
+    type: 'flex',
+    altText: 'パートナー心理分析をはじめる',
+    contents: {
+      type: 'bubble',
+      styles: { body: { backgroundColor: COLOR.greige } },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        paddingAll: '22px',
+        contents: [
+          { type: 'text', text: 'STEALTH FILE', size: 'xs', weight: 'bold', color: COLOR.gold, align: 'center' },
+          { type: 'text', text: 'パートナー心理分析', size: 'xl', weight: 'bold', color: COLOR.textOnLight, align: 'center', margin: 'md' },
+          { type: 'text', text: 'その違和感、気のせいですか？\n30秒で関係性をそっとチェック。', wrap: true, size: 'sm', color: COLOR.subOnLight, align: 'center', margin: 'md' },
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xl',
+            contents: [
+              {
+                type: 'button',
+                style: 'primary',
+                color: COLOR.brown,
+                height: 'md',
+                action: { type: 'message', label: '診断をはじめる', text: '診断開始' }
+              }
+            ]
+          },
+          { type: 'text', text: '匿名OK・記録は残りません', size: 'xs', color: COLOR.hintOnLight, align: 'center', margin: 'lg' }
+        ]
+      }
+    }
+  };
+}
+
+// =========================
+// ② 質問画面
+// =========================
 function createQuestionMessage(questionNumber, questionData) {
+  const total = questions.length;
+  const ratio = Math.round((questionNumber - 1) / total * 100);
 
   return {
-    type: "flex",
-
-    altText: `浮気診断 Q${questionNumber}`,
-
+    type: 'flex',
+    altText: `恋愛心理チェック Q${questionNumber}`,
     contents: {
-
-      type: "bubble",
-
-      styles: {
-        body: {
-          backgroundColor: "#0b0b0b"
-        },
-
-        footer: {
-          backgroundColor: "#0b0b0b"
-        }
-      },
-
+      type: 'bubble',
+      styles: { body: { backgroundColor: COLOR.paper } },
       body: {
-
-        type: "box",
-
-        layout: "vertical",
-
-        spacing: "lg",
-
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        paddingAll: '22px',
         contents: [
-
+          brandHeader(`Q${questionNumber} / ${total}`),
+          // 進捗バー
           {
-            type: "text",
-            text: "STEALTH FILE",
-            weight: "bold",
-            size: "sm",
-            color: "#bfbfbf",
-            align: "center"
+            type: 'box',
+            layout: 'vertical',
+            height: '5px',
+            backgroundColor: COLOR.trackLight,
+            cornerRadius: '99px',
+            margin: 'md',
+            contents: [
+              {
+                type: 'box',
+                layout: 'vertical',
+                width: `${Math.max(ratio, 3)}%`,
+                height: '5px',
+                backgroundColor: COLOR.gold,
+                cornerRadius: '99px',
+                contents: []
+              }
+            ]
           },
-
           {
-            type: "text",
-            text: "浮気診断 🕵",
-            weight: "bold",
-            size: "xl",
-            color: "#ffffff",
-            align: "center"
-          },
-
-          {
-            type: "separator",
-            color: "#555555"
-          },
-
-          {
-            type: "text",
-            text: `Q${questionNumber}`,
-            weight: "bold",
-            size: "xxl",
-            color: "#ffffff",
-            align: "center"
-          },
-
-          {
-            type: "text",
+            type: 'text',
             text: questionData.text,
             wrap: true,
-            size: "md",
-            margin: "md",
-            color: "#d9d9d9",
-            align: "center"
+            size: 'md',
+            weight: 'bold',
+            color: COLOR.textOnLight,
+            align: 'center',
+            margin: 'xl'
+          },
+          {
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'sm',
+            margin: 'xl',
+            contents: [
+              {
+                type: 'button',
+                style: 'primary',
+                color: COLOR.brown,
+                height: 'md',
+                action: { type: 'message', label: 'あてはまる', text: 'あてはまる' }
+              },
+              {
+                type: 'button',
+                style: 'secondary',
+                height: 'md',
+                action: { type: 'message', label: '少し気になる', text: '少し気になる' }
+              },
+              {
+                type: 'button',
+                style: 'secondary',
+                height: 'md',
+                action: { type: 'message', label: '気にならない', text: '気にならない' }
+              }
+            ]
           }
         ]
-      },
+      }
+    }
+  };
+}
 
-      footer: {
-
-        type: "box",
-
-        layout: "vertical",
-
-        spacing: "md",
-
+// =========================
+// ④ CTA画面（結果のあとに送る2通目）
+// =========================
+function createCtaMessage() {
+  return {
+    type: 'flex',
+    altText: '次の一歩をご案内します',
+    contents: {
+      type: 'bubble',
+      styles: { body: { backgroundColor: COLOR.greige } },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        paddingAll: '22px',
         contents: [
-
+          { type: 'text', text: '気持ちを、そのままにしないで。', wrap: true, size: 'md', weight: 'bold', color: COLOR.textOnLight, align: 'center' },
+          { type: 'text', text: 'あなたの状況に合わせて、\n次の一歩をそっとご案内します。', wrap: true, size: 'sm', color: COLOR.subOnLight, align: 'center', margin: 'md' },
           {
-            type: "button",
+            type: 'box',
+            layout: 'vertical',
+            spacing: 'sm',
+            margin: 'xl',
+            contents: [
+              {
+                type: 'button',
+                style: 'primary',
+                color: COLOR.brown,
+                height: 'md',
+                action: { type: 'message', label: '匿名でカウンセラーに相談', text: '相談したい' }
+              },
+              {
+                type: 'button',
+                style: 'secondary',
+                height: 'md',
+                action: { type: 'message', label: 'もう一度診断する', text: '診断開始' }
+              }
+            ]
+          },
+          { type: 'text', text: '無理な勧誘は一切ありません。\nまずは話すだけでも大丈夫です。', wrap: true, size: 'xs', color: COLOR.hintOnLight, align: 'center', margin: 'lg' }
+        ]
+      }
+    }
+  };
+}
 
-            style: "primary",
+// =========================
+// ③ 結果画面
+// =========================
+function buildResult(current) {
+  const maxScore = questions.length * 10;
+  const score = Math.min(100, Math.round((current.score / maxScore) * 100));
+  const analysis = current.analysis;
 
-            height: "md",
+  // レーダー（0〜5）
+  const radar = {};
+  for (const key of RADAR_KEYS) {
+    radar[key] = Math.min(5, Math.round((analysis[key] / categoryMax[key]) * 5));
+  }
+  const bar = (n) => '●'.repeat(n) + '○'.repeat(5 - n);
 
-            color: "#222222",
+  // 全国比較
+  const nationalAverage = 42;
+  const diff = score - nationalAverage;
+  let compareText;
+  if (diff >= 30) compareText = `平均より ${diff}pt 高めの傾向です。`;
+  else if (diff >= 10) compareText = `平均より ${diff}pt やや高めです。`;
+  else if (diff >= -10) compareText = '平均に近い傾向です。';
+  else compareText = `平均より ${Math.abs(diff)}pt 低めの傾向です。`;
 
-            action: {
-              type: "message",
-              label: "はい",
-              text: "はい"
-            }
+  // 危険度 → 「関係性の状態」
+  let title, comment;
+  if (score >= 80) {
+    title = '関係性の状態：要セルフケア';
+    comment = '気になるシグナルが多く出ています。違和感は早めに整理しておくと、心の負担が軽くなります。';
+  } else if (score >= 60) {
+    title = '関係性の状態：少し注意';
+    comment = '気になる変化がいくつか見られます。今の気持ちを、そのままにしすぎないことが大切です。';
+  } else if (score >= 40) {
+    title = '関係性の状態：ゆらぎあり';
+    comment = '小さな違和感が見られます。焦らず、自分の感じ方を大切にしていきましょう。';
+  } else {
+    title = '関係性の状態：おだやか';
+    comment = '今のところ、大きな揺らぎは見られませんでした。';
+  }
+
+  // 心理カウンセラーコメント
+  const counselorPatterns = {
+    距離感: [
+      '距離を感じる時間が増えたなら、関係の温度差を見つめ直すタイミングかもしれません。',
+      '言葉よりも、態度の変化のほうが本音に近いことがあります。'
+    ],
+    連絡の変化: [
+      '「前と違う」という感覚は、あなたの心がすでに小さな変化を拾っているサインかもしれません。',
+      '連絡の取り方の変化には、気持ちの優先順位が表れることがあります。'
+    ],
+    生活リズム: [
+      '生活リズムのズレが続くなら、理由の一貫性をそっと見てみてください。',
+      '予定が読めなくなってきた時は、関係の透明度が少し下がっているのかもしれません。'
+    ],
+    気持ちの揺れ: [
+      '急な優しさや冷たさの落差には、心の揺れが表れていることがあります。',
+      '見た目や雰囲気の変化が重なる時は、慌てず様子を見るのが安心です。'
+    ]
+  };
+  // 一番高いカテゴリのコメントを選ぶ
+  let topCat = RADAR_KEYS[0];
+  for (const k of RADAR_KEYS) {
+    if (analysis[k] > analysis[topCat]) topCat = k;
+  }
+  const pool = counselorPatterns[topCat];
+  const counselorComment = pool[Math.floor(Math.random() * pool.length)];
+
+  // 心理タイプ（ポジティブ寄りの言い換え）
+  const types = [
+    { name: '慎重サイン型', desc: '小さな変化をていねいに感じ取れるタイプ。直感を大切にしてあげてください。' },
+    { name: 'リズム変化型', desc: '生活パターンの揺れに気づきやすいタイプ。一貫性をそっと見ていきましょう。' },
+    { name: '心の機微型', desc: '相手の感情の波を敏感に感じ取れるタイプ。無理に飲み込みすぎないことも大切です。' },
+    { name: '安心重視型', desc: '安心できる関係を大切にしたいタイプ。気持ちを言葉にすることが助けになります。' }
+  ];
+  const selectedType = types[Math.floor(Math.random() * types.length)];
+
+  return {
+    type: 'flex',
+    altText: '心理分析レポート',
+    contents: {
+      type: 'bubble',
+      styles: { body: { backgroundColor: COLOR.black } },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        paddingAll: '22px',
+        contents: [
+          { type: 'text', text: 'PSYCHOLOGY REPORT', size: 'xs', weight: 'bold', color: COLOR.gold, align: 'center' },
+          { type: 'text', text: 'あなたの関係性スコア', size: 'sm', color: COLOR.subOnDark, align: 'center', margin: 'lg' },
+          { type: 'text', text: '注意シグナル', size: 'xs', color: COLOR.gold, align: 'center', margin: 'md' },
+          { type: 'text', text: `${score}%`, size: '3xl', weight: 'bold', color: COLOR.greige, align: 'center' },
+
+          // スコアバー
+          {
+            type: 'box',
+            layout: 'vertical',
+            height: '8px',
+            backgroundColor: COLOR.trackDark,
+            cornerRadius: '99px',
+            margin: 'lg',
+            contents: [
+              {
+                type: 'box',
+                layout: 'vertical',
+                width: `${Math.max(score, 2)}%`,
+                height: '8px',
+                backgroundColor: COLOR.gold,
+                cornerRadius: '99px',
+                contents: []
+              }
+            ]
           },
 
+          { type: 'text', text: title, weight: 'bold', size: 'md', color: COLOR.textOnDark, align: 'center', margin: 'lg' },
+          { type: 'text', text: comment, wrap: true, size: 'sm', color: COLOR.subOnDark, align: 'center', margin: 'sm' },
+
+          // 全国比較
           {
-            type: "button",
+            type: 'box',
+            layout: 'vertical',
+            backgroundColor: COLOR.cardOnDark,
+            cornerRadius: 'md',
+            paddingAll: '12px',
+            margin: 'lg',
+            contents: [
+              { type: 'text', text: '📊 平均との比較', size: 'xs', weight: 'bold', color: COLOR.gold },
+              { type: 'text', text: compareText, wrap: true, size: 'sm', color: COLOR.textOnDark, margin: 'sm' }
+            ]
+          },
 
-            style: "secondary",
+          // レーダー
+          {
+            type: 'box',
+            layout: 'vertical',
+            backgroundColor: COLOR.cardOnDark,
+            cornerRadius: 'md',
+            paddingAll: '12px',
+            margin: 'md',
+            contents: [
+              { type: 'text', text: '心理分析レーダー', size: 'xs', weight: 'bold', color: COLOR.gold },
+              {
+                type: 'box', layout: 'horizontal', margin: 'sm',
+                contents: [
+                  { type: 'text', text: '距離感', size: 'sm', color: COLOR.textOnDark, flex: 4 },
+                  { type: 'text', text: bar(radar['距離感']), size: 'sm', color: COLOR.gold, align: 'end', flex: 5 }
+                ]
+              },
+              {
+                type: 'box', layout: 'horizontal', margin: 'sm',
+                contents: [
+                  { type: 'text', text: '連絡の変化', size: 'sm', color: COLOR.textOnDark, flex: 4 },
+                  { type: 'text', text: bar(radar['連絡の変化']), size: 'sm', color: COLOR.gold, align: 'end', flex: 5 }
+                ]
+              },
+              {
+                type: 'box', layout: 'horizontal', margin: 'sm',
+                contents: [
+                  { type: 'text', text: '生活リズム', size: 'sm', color: COLOR.textOnDark, flex: 4 },
+                  { type: 'text', text: bar(radar['生活リズム']), size: 'sm', color: COLOR.gold, align: 'end', flex: 5 }
+                ]
+              },
+              {
+                type: 'box', layout: 'horizontal', margin: 'sm',
+                contents: [
+                  { type: 'text', text: '気持ちの揺れ', size: 'sm', color: COLOR.textOnDark, flex: 4 },
+                  { type: 'text', text: bar(radar['気持ちの揺れ']), size: 'sm', color: COLOR.gold, align: 'end', flex: 5 }
+                ]
+              }
+            ]
+          },
 
-            height: "md",
+          // カウンセラーコメント
+          {
+            type: 'box',
+            layout: 'vertical',
+            backgroundColor: COLOR.cardOnDark,
+            cornerRadius: 'md',
+            paddingAll: '12px',
+            margin: 'md',
+            contents: [
+              { type: 'text', text: '💬 心理カウンセラーより', size: 'xs', weight: 'bold', color: COLOR.gold },
+              { type: 'text', text: counselorComment, wrap: true, size: 'sm', color: COLOR.textOnDark, margin: 'sm' }
+            ]
+          },
 
-            action: {
-              type: "message",
-              label: "いいえ",
-              text: "いいえ"
-            }
+          // 心理タイプ
+          {
+            type: 'box',
+            layout: 'vertical',
+            backgroundColor: COLOR.cardOnDark,
+            cornerRadius: 'md',
+            paddingAll: '12px',
+            margin: 'md',
+            contents: [
+              { type: 'text', text: 'あなたの心理タイプ', size: 'xs', weight: 'bold', color: COLOR.gold },
+              { type: 'text', text: selectedType.name, size: 'lg', weight: 'bold', color: COLOR.textOnDark, margin: 'sm' },
+              { type: 'text', text: selectedType.desc, wrap: true, size: 'sm', color: COLOR.subOnDark, margin: 'sm' }
+            ]
           }
         ]
       }
@@ -290,19 +494,11 @@ function createQuestionMessage(questionNumber, questionData) {
 // =========================
 // Webhook
 // =========================
-
 app.post('/webhook', line.middleware(config), async (req, res) => {
-
   res.status(200).end();
-
   try {
-
-    await Promise.all(
-      req.body.events.map(handleEvent)
-    );
-
+    await Promise.all(req.body.events.map(handleEvent));
   } catch (err) {
-
     console.error(err);
   }
 });
@@ -310,606 +506,69 @@ app.post('/webhook', line.middleware(config), async (req, res) => {
 // =========================
 // イベント処理
 // =========================
-
 async function handleEvent(event) {
-
   try {
-
-    if (
-      event.type !== 'message' ||
-      event.message.type !== 'text'
-    ) {
+    if (event.type !== 'message' || event.message.type !== 'text') {
       return null;
     }
 
     const userId = event.source.userId;
     const text = event.message.text.trim();
 
-    // =========================
-    // 診断開始
-    // =========================
-
-    if (text === '診断開始') {
-
+    // 診断開始 / リスタート
+    if (text === '診断開始' || text === '診断' || text === 'はじめる') {
       userData[userId] = {
-
         step: 0,
-
         score: 0,
-
-        analysis: {
-
-          隠し事: 0,
-          連絡: 0,
-          行動: 0,
-          外見: 0,
-          態度: 0
-        }
+        analysis: { 距離感: 0, 連絡の変化: 0, 生活リズム: 0, 気持ちの揺れ: 0 }
       };
-
-      return client.replyMessage(
-        event.replyToken,
-        createQuestionMessage(
-          1,
-          questions[0]
-        )
-      );
+      return client.replyMessage(event.replyToken, createQuestionMessage(1, questions[0]));
     }
 
+    // 相談導線（CTAの受け皿）
+    if (text === '相談したい') {
+      return client.replyMessage(event.replyToken, {
+        type: 'text',
+        text: 'メッセージありがとうございます。\nどんな小さなことでも大丈夫です。気になっていることを、よかったらこのまま送ってくださいね。担当者がやさしくお返事します。'
+      });
+    }
+
+    // 診断未開始 → 案内（無反応にしない）
     if (!userData[userId]) {
-      return null;
+      return client.replyMessage(event.replyToken, createStartMessage());
     }
 
     const current = userData[userId];
 
-    if (
-      text !== 'はい' &&
-      text !== 'いいえ'
-    ) {
-      return null;
+    // 想定外の回答 → やさしく促す（詰まらせない）
+    if (!(text in ANSWERS)) {
+      return client.replyMessage(event.replyToken, {
+        type: 'text',
+        text: '下のボタンから「あてはまる」「少し気になる」「気にならない」のいずれかを選んでくださいね。'
+      });
     }
 
-    // =========================
-    // 点数加算
-    // =========================
-
-    if (text === 'はい') {
-
-      const q = questions[current.step];
-
-      current.score += q.point;
-
-      current.analysis[q.category] += q.point;
-    }
-
+    // 加点
+    const q = questions[current.step];
+    const point = ANSWERS[text];
+    current.score += point;
+    current.analysis[q.category] += point;
     current.step++;
 
-    // =========================
     // 次の質問
-    // =========================
-
     if (current.step < questions.length) {
-
       return client.replyMessage(
         event.replyToken,
-        createQuestionMessage(
-          current.step + 1,
-          questions[current.step]
-        )
+        createQuestionMessage(current.step + 1, questions[current.step])
       );
     }
 
-    // =========================
-    // スコア
-    // =========================
-
-    const maxScore = questions.reduce(
-      (total, q) => total + q.point,
-      0
-    );
-
-    const score = Math.min(
-      100,
-      Math.round(
-        (current.score / maxScore) * 100
-      )
-    );
-
-    const analysis = current.analysis;
-
-    // =========================
-    // レーダー
-    // =========================
-
-    const radar = {
-
-      隠し事: Math.min(
-        5,
-        Math.round(
-          (analysis['隠し事'] /
-            categoryMax['隠し事']) * 5
-        )
-      ),
-
-      連絡: Math.min(
-        5,
-        Math.round(
-          (analysis['連絡'] /
-            categoryMax['連絡']) * 5
-        )
-      ),
-
-      行動: Math.min(
-        5,
-        Math.round(
-          (analysis['行動'] /
-            categoryMax['行動']) * 5
-        )
-      ),
-
-      外見: Math.min(
-        5,
-        Math.round(
-          (analysis['外見'] /
-            categoryMax['外見']) * 5
-        )
-      ),
-
-      態度: Math.min(
-        5,
-        Math.round(
-          (analysis['態度'] /
-            categoryMax['態度']) * 5
-        )
-      )
-    };
-
-    // =========================
-    // 全国比較
-    // =========================
-
-    const nationalAverage = 42;
-
-    const compareScore =
-      score - nationalAverage;
-
-    let compareText = "";
-
-    if (compareScore >= 30) {
-
-      compareText =
-        `全国平均より ${compareScore}% 高い危険傾向です。`;
-
-    } else if (compareScore >= 10) {
-
-      compareText =
-        `全国平均より ${compareScore}% やや高めです。`;
-
-    } else if (compareScore >= -10) {
-
-      compareText =
-        "全国平均と近い傾向です。";
-
-    } else {
-
-      compareText =
-        `全国平均より ${Math.abs(compareScore)}% 低い傾向です。`;
-    }
-
-    // =========================
-    // 危険度
-    // =========================
-
-    let title = "";
-    let comment = "";
-
-    if (score >= 80) {
-
-      title = "危険レベル：極秘警戒";
-
-      comment =
-        "浮気の可能性がかなり高い傾向があります。\n\n" +
-        "違和感を放置すると、後から確認が難しくなるケースもあります。";
-
-    } else if (score >= 60) {
-
-      title = "危険レベル：高";
-
-      comment =
-        "気になる行動が複数見られます。\n\n" +
-        "今後の変化には注意が必要です。";
-
-    } else if (score >= 40) {
-
-      title = "危険レベル：中";
-
-      comment =
-        "一部に気になる傾向があります。\n\n" +
-        "小さな違和感を見逃さないようにしましょう。";
-
-    } else {
-
-      title = "危険レベル：低";
-
-      comment =
-        "現時点では大きな問題は見られませんでした。";
-    }
-
-    // =========================
-    // AIコメント
-    // =========================
-
-    const aiPatterns = {
-
-      隠し事: [
-        "『見せられないものが増えた』と感じるなら、その違和感は無視しない方がいいかもしれません。",
-        "スマホを隠す行動は、関係性の中で不安が生まれやすいサインです。",
-        "本当に何もなければ、隠す必要は少ないはずです。",
-        "疑いすぎる必要はありませんが、安心できない状態が続くなら注意です。",
-        "相手の行動よりも、あなたが不安を感じ続けていること自体が重要なサインです。"
-      ],
-
-      連絡: [
-        "返信の遅さよりも、『前と違う』と感じる変化に注意が必要です。",
-        "連絡頻度の変化は、気持ちの距離が表れやすいポイントです。",
-        "説明のない変化が続くなら注意が必要かもしれません。",
-        "連絡が雑になったと感じる時、優先順位が変わっている可能性もあります。",
-        "不安なまま我慢し続けるより、冷静に状況を見直すタイミングかもしれません。"
-      ],
-
-      行動: [
-        "予定の変化が増えているなら、行動パターンのズレに注意してください。",
-        "『なんとなく怪しい』という直感は、細かな変化を拾っている場合があります。",
-        "急な外出や予定変更が続く場合、理由の一貫性を見ることが大切です。",
-        "違和感を感じた時点で、すでに普段とのズレが起きている可能性があります。",
-        "行動が読めなくなってきた時は、関係の透明度が下がっているサインかもしれません。"
-      ],
-
-      外見: [
-        "外見の変化そのものより、『誰に向けた変化なのか』が気になるポイントです。",
-        "急な美容意識の高まりは、心理的な変化とつながる場合があります。",
-        "服装や香りの変化が続くなら、生活の中に新しい刺激が入っている可能性もあります。",
-        "自分磨きは悪いことではありません。ただ、理由が曖昧な変化には注意です。",
-        "見た目の変化と行動の変化が重なる時は、慎重に様子を見るべきタイミングです。"
-      ],
-
-      態度: [
-        "急に優しい、急に冷たい。その落差は、心の揺れが表れている可能性があります。",
-        "態度の変化は、相手の中で何かが変わっているサインかもしれません。",
-        "距離を感じる時間が増えたなら、関係性の温度差を見直すタイミングです。",
-        "言葉よりも、態度の変化の方が本音に近いことがあります。",
-        "あなたが『前と違う』と感じているなら、その感覚は大切にしてください。"
-      ]
-    };
-
-    const categories =
-      Object.keys(aiPatterns);
-
-    const randomCategory =
-      categories[
-        Math.floor(
-          Math.random() *
-          categories.length
-        )
-      ];
-
-    const aiComment =
-      aiPatterns[randomCategory][
-        Math.floor(
-          Math.random() *
-          aiPatterns[randomCategory].length
-        )
-      ];
-
-    // =========================
-    // 危険人物タイプ
-    // =========================
-
-    const dangerTypes = [
-
-      {
-        name: '隠密行動型',
-        desc:
-          '秘密行動が増えやすいタイプ。\n\n慎重に行動する傾向があります。'
-      },
-
-      {
-        name: '夜行動型',
-        desc:
-          '外出・予定変化が増えやすいタイプ。\n\n生活パターンの乱れに注意です。'
-      },
-
-      {
-        name: '承認欲求型',
-        desc:
-          '外見意識が高まりやすいタイプ。\n\n美容や服装変化が特徴です。'
-      },
-
-      {
-        name: '感情変化型',
-        desc:
-          '感情距離に変化が出やすいタイプ。\n\n接し方に波が出る傾向があります。'
-      },
-
-      {
-        name: '自由奔放型',
-        desc:
-          '自由行動が増えやすいタイプ。\n\n予定変更が特徴として出やすい傾向があります。'
-      },
-
-      {
-        name: '二面性タイプ',
-        desc:
-          '表向きは自然でも、裏で行動変化が起きやすいタイプです。'
-      },
-
-      {
-        name: '刺激追求型',
-        desc:
-          '新しい刺激を求めやすいタイプ。\n\n行動範囲が変化しやすい傾向があります。'
-      }
-    ];
-
-    const selectedType =
-      dangerTypes[
-        Math.floor(
-          Math.random() *
-          dangerTypes.length
-        )
-      ];
-
+    // 結果 ＋ CTA（2通同時）
+    const resultMessage = buildResult(current);
     delete userData[userId];
-
-    // =========================
-    // 結果表示
-    // =========================
-
-    return client.replyMessage(event.replyToken, {
-
-      type: 'flex',
-
-      altText: '診断結果',
-
-      contents: {
-
-        type: 'bubble',
-
-        styles: {
-          body: {
-            backgroundColor: "#0b0b0b"
-          }
-        },
-
-        body: {
-
-          type: 'box',
-
-          layout: 'vertical',
-
-          spacing: 'md',
-
-          contents: [
-
-            {
-              type: "text",
-              text: "STEALTH FILE",
-              weight: "bold",
-              size: "sm",
-              color: "#bfbfbf",
-              align: "center"
-            },
-
-            {
-              type: 'text',
-              text: '🕵 診断結果',
-              weight: 'bold',
-              size: 'xxl',
-              color: '#ffffff',
-              align: 'center'
-            },
-
-            {
-              type: 'separator',
-              color: '#555555',
-              margin: 'md'
-            },
-
-            {
-              type: 'text',
-              text: title,
-              weight: 'bold',
-              size: 'lg',
-              color: '#d9d9d9',
-              margin: 'lg'
-            },
-
-            {
-              type: 'text',
-              text: `浮気率 ${score}%`,
-              size: 'xxl',
-              weight: 'bold',
-              color: '#ffffff'
-            },
-
-            // スコアバー
-
-            {
-              type: "box",
-              layout: "vertical",
-              margin: "lg",
-              contents: [
-
-                {
-                  type: "box",
-                  layout: "vertical",
-                  backgroundColor: "#333333",
-                  cornerRadius: "md",
-                  height: "18px",
-                  contents: [
-
-                    {
-                      type: "box",
-                      layout: "vertical",
-                      backgroundColor: "#cfcfcf",
-                      width: `${score}%`,
-                      height: "18px",
-                      cornerRadius: "md",
-                      contents: []
-                    }
-                  ]
-                }
-              ]
-            },
-
-            {
-              type: 'text',
-              text: comment,
-              wrap: true,
-              size: 'sm',
-              margin: 'lg',
-              color: '#cfcfcf'
-            },
-
-            // 全国比較
-
-            {
-              type: 'box',
-
-              layout: 'vertical',
-
-              margin: 'lg',
-
-              paddingAll: '12px',
-
-              backgroundColor: '#151515',
-
-              cornerRadius: 'md',
-
-              contents: [
-
-                {
-                  type: 'text',
-                  text: '📊 全国比較',
-                  weight: 'bold',
-                  size: 'sm',
-                  color: '#ffffff'
-                },
-
-                {
-                  type: 'text',
-                  text: compareText,
-                  margin: 'sm',
-                  wrap: true,
-                  size: 'sm',
-                  color: '#cfcfcf'
-                }
-              ]
-            },
-
-            {
-              type: 'separator',
-              color: '#555555',
-              margin: 'lg'
-            },
-
-            // レーダー
-
-            {
-              type: 'text',
-              text: 'AI分析レーダー',
-              weight: 'bold',
-              size: 'md',
-              margin: 'lg',
-              color: '#ffffff'
-            },
-
-            {
-              type: 'text',
-
-              text:
-`隠し事  ${'■'.repeat(radar['隠し事'])}
-
-連絡      ${'■'.repeat(radar['連絡'])}
-
-行動      ${'■'.repeat(radar['行動'])}
-
-外見      ${'■'.repeat(radar['外見'])}
-
-態度      ${'■'.repeat(radar['態度'])}`,
-
-              wrap: true,
-              margin: 'md',
-              size: 'sm',
-              color: '#cfcfcf'
-            },
-
-            {
-              type: 'separator',
-              color: '#555555',
-              margin: 'lg'
-            },
-
-            // AIコメント
-
-            {
-              type: 'text',
-              text: '🤖 AI分析コメント',
-              weight: 'bold',
-              size: 'md',
-              margin: 'lg',
-              color: '#ffffff'
-            },
-
-            {
-              type: 'text',
-              text: aiComment,
-              wrap: true,
-              size: 'sm',
-              margin: 'md',
-              color: '#cfcfcf'
-            },
-
-            {
-              type: 'separator',
-              color: '#555555',
-              margin: 'lg'
-            },
-
-            // 危険人物タイプ
-
-            {
-              type: 'text',
-              text: '⚠ 危険人物タイプ',
-              weight: 'bold',
-              size: 'md',
-              margin: 'lg',
-              color: '#ffffff'
-            },
-
-            {
-              type: 'text',
-              text: selectedType.name,
-              weight: 'bold',
-              size: 'xl',
-              color: '#d9d9d9',
-              margin: 'md'
-            },
-
-            {
-              type: 'text',
-              text: selectedType.desc,
-              wrap: true,
-              size: 'sm',
-              margin: 'md',
-              color: '#cfcfcf'
-            }
-          ]
-        }
-      }
-    });
+    return client.replyMessage(event.replyToken, [resultMessage, createCtaMessage()]);
 
   } catch (err) {
-
     console.error(err);
   }
 }
@@ -917,13 +576,7 @@ async function handleEvent(event) {
 // =========================
 // 起動
 // =========================
-
-const PORT =
-  process.env.PORT || 3000;
-
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-
-  console.log(
-    `Server running on ${PORT}`
-  );
+  console.log(`Server running on ${PORT}`);
 });
