@@ -60,7 +60,7 @@ if(text==='分析スタート'||text==='診断スタート'){userData[userId]={p
 if(text==='相談したい'){return client.replyMessage(event.replyToken,{type:'text',text:'メッセージありがとうございます。\nどんな小さなことでも大丈夫です。気になっていることを、よかったらこのまま送ってくださいね。担当者がやさしくお返事します。'});}
 
 const current=userData[userId];
-if(!current){return client.replyMessage(event.replyToken,createTopMessage());}
+if(!current){return null;}
 
 if(current.phase==='gender'){if(!GENDERS.includes(text)){return client.replyMessage(event.replyToken,{type:'text',text:'下のボタンから「男性」「女性」のいずれかを選んでくださいね。'});}current.gender=text;current.phase='age';return client.replyMessage(event.replyToken,createAgeMessage());}
 
